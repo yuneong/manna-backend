@@ -19,4 +19,5 @@ interface MeetingParticipantJpaRepository : JpaRepository<MeetingParticipant, Lo
 interface AvailabilityJpaRepository : JpaRepository<Availability, Long> {
     fun deleteByMeetingIdAndUserId(meetingId: Long, userId: Long)
     fun findByMeetingId(meetingId: Long): List<Availability>
+    fun findByMeetingIdAndUserId(meetingId: Long, userId: Long): List<Availability>
 }

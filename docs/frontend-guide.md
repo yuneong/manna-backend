@@ -257,6 +257,24 @@ POST /api/v1/meetings/{meetingId}/join
 
 ---
 
+### 내 가용 날짜 조회 🔒
+
+```
+GET /api/v1/meetings/{meetingId}/availability/me
+```
+
+페이지 마운트 시 호출하여 캘린더의 초기 선택 상태를 복원합니다.
+
+**Response** `200`
+```json
+{
+  "meetingId": 1,
+  "availableDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
+}
+```
+
+---
+
 ### 가용 날짜 등록 🔒
 
 ```

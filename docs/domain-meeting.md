@@ -63,6 +63,7 @@ meeting/
         ├── UpdateAvailabilityRequest.kt
         ├── ConfirmDateRequest.kt
         ├── MeetingResponse.kt
+        ├── MyAvailabilityResponse.kt
         └── HeatmapResponse.kt
 ```
 
@@ -97,6 +98,7 @@ meeting/
 | `updateAvailability()` | 기존 가용 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
 | `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 |
 | `getAvailabilityHeatmap()` | `{ "날짜": 참여자수 }` 형태로 집계 |
+| `getMyAvailability()` | 특정 미팅에서 본인이 선택한 날짜 목록 반환 |
 
 ---
 
@@ -159,6 +161,23 @@ meeting/
 - `MEETING_NOT_FOUND` — 존재하지 않는 약속방
 - `ALREADY_JOINED` — 이미 참여 중
 - `MEETING_NOT_OPEN` — OPEN 상태가 아님
+
+---
+
+### GET /api/v1/meetings/{meetingId}/availability/me
+
+내가 선택한 가용 날짜 조회 (인증 필요)
+
+**Response** `200 OK`
+```json
+{
+  "meetingId": 1,
+  "availableDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
+}
+```
+
+**오류**
+- `MEETING_NOT_FOUND` — 존재하지 않는 약속방
 
 ---
 

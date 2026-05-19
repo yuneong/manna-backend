@@ -12,6 +12,7 @@ import com.manna.meeting.domain.entity.MeetingParticipant
 import com.manna.meeting.domain.repository.MeetingRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Service
 @Transactional(readOnly = true)
@@ -74,4 +75,10 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
 
     fun getMyMeetings(userId: Long): List<Meeting> =
         meetingRepository.findAllByUserId(userId)
+
+    fun getMyAvailability(meetingId: Long, userId: Long): List<LocalDate> {
+        getById(meetingId)
+        return meetingRepository.findAvailabilitiesByMeetingIdAndUserId(meetingId, userId)
+            .map { it.availableDate }
+    }
 }

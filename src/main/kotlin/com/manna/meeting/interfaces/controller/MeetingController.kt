@@ -6,6 +6,7 @@ import com.manna.meeting.interfaces.dto.ConfirmDateRequest
 import com.manna.meeting.interfaces.dto.CreateMeetingRequest
 import com.manna.meeting.interfaces.dto.HeatmapResponse
 import com.manna.meeting.interfaces.dto.MeetingResponse
+import com.manna.meeting.interfaces.dto.MyAvailabilityResponse
 import com.manna.meeting.interfaces.dto.UpdateAvailabilityRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -80,6 +81,17 @@ class MeetingController(private val meetingFacade: MeetingFacade) {
     ): ResponseEntity<Unit> {
         meetingFacade.updateAvailability(request.toCommand(meetingId, userId))
         return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "내 가용 날짜 조회", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @ApiResponse(responseCode = "200", description = "내가 선택한 날짜 목록 반환")
+    @GetMapping("/{meetingId}/availability/me")
+    fun getMyAvailability(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable meetingId: Long,
+    ): ResponseEntity<MyAvailabilityResponse> {
+        val dates = meetingFacade.getMyAvailability(meetingId, userId)
+        return ResponseEntity.ok(MyAvailabilityResponse(meetingId = meetingId, availableDates = dates))
     }
 
     @Operation(summary = "가용 날짜 히트맵 조회", security = [SecurityRequirement(name = "Bearer Authentication")])

@@ -196,6 +196,42 @@ class MeetingDomainServiceTest {
     }
 
     @Nested
+    inner class GetMyAvailability {
+
+        @Test
+        fun `내 가용 날짜 목록 반환`() {
+            val found = meeting()
+            val dates = listOf(LocalDate.of(2025, 6, 10), LocalDate.of(2025, 6, 15))
+            val availabilities = dates.map { Availability(meeting = found, userId = 2L, availableDate = it) }
+
+            whenever(meetingRepository.findById(1L)).thenReturn(found)
+            whenever(meetingRepository.findAvailabilitiesByMeetingIdAndUserId(1L, 2L)).thenReturn(availabilities)
+
+            val result = meetingDomainService.getMyAvailability(1L, 2L)
+
+            assertThat(result).containsExactlyElementsOf(dates)
+        }
+
+        @Test
+        fun `존재하지 않는 약속방 조회 시 MEETING_NOT_FOUND 예외`() {
+            whenever(meetingRepository.findById(999L)).thenReturn(null)
+
+            val ex = assertThrows<MannaException> { meetingDomainService.getMyAvailability(999L, 2L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_FOUND)
+        }
+
+        @Test
+        fun `등록한 날짜가 없으면 빈 리스트 반환`() {
+            whenever(meetingRepository.findById(1L)).thenReturn(meeting())
+            whenever(meetingRepository.findAvailabilitiesByMeetingIdAndUserId(1L, 2L)).thenReturn(emptyList())
+
+            val result = meetingDomainService.getMyAvailability(1L, 2L)
+
+            assertThat(result).isEmpty()
+        }
+    }
+
+    @Nested
     inner class GetAvailabilityHeatmap {
 
         @Test

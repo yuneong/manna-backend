@@ -42,4 +42,7 @@ class MeetingFacade(private val meetingDomainService: MeetingDomainService) {
 
     fun getMyMeetings(userId: Long): List<MeetingInfo> =
         meetingDomainService.getMyMeetings(userId).map { MeetingInfo.from(it) }
+
+    fun getMyAvailability(meetingId: Long, userId: Long): List<String> =
+        meetingDomainService.getMyAvailability(meetingId, userId).map { it.toString() }
 }

@@ -44,4 +44,7 @@ class MeetingRepositoryImpl(
 
     override fun findAvailabilitiesByMeetingId(meetingId: Long): List<Availability> =
         availabilityJpaRepository.findByMeetingId(meetingId)
+
+    override fun findAvailabilitiesByMeetingIdAndUserId(meetingId: Long, userId: Long): List<Availability> =
+        availabilityJpaRepository.findByMeetingIdAndUserId(meetingId, userId)
 }
