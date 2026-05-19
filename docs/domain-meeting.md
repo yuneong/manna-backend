@@ -99,6 +99,7 @@ meeting/
 | `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 |
 | `getAvailabilityHeatmap()` | `{ "날짜": 참여자수 }` 형태로 집계 |
 | `getMyAvailability()` | 특정 미팅에서 본인이 선택한 날짜 목록 반환 |
+| `getParticipantCount()` | 약속방 참여자 수 반환 |
 
 ---
 
@@ -129,7 +130,8 @@ meeting/
   "dateRangeEnd": "2025-06-30",
   "confirmedDate": null,
   "status": "OPEN",
-  "createdAt": "2025-05-18T12:00:00"
+  "createdAt": "2025-05-18T12:00:00",
+  "participantCount": 1
 }
 ```
 

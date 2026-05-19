@@ -15,6 +15,7 @@ data class MeetingResponse(
     val confirmedDate: LocalDate?,
     val status: MeetingStatus,
     val createdAt: LocalDateTime,
+    val participantCount: Int,
 ) {
     companion object {
         fun from(info: MeetingInfo) = MeetingResponse(
@@ -27,6 +28,7 @@ data class MeetingResponse(
             confirmedDate = info.confirmedDate,
             status = info.status,
             createdAt = info.createdAt,
+            participantCount = info.participantCount,
         )
     }
 }

@@ -14,7 +14,8 @@ class MeetingFacade(private val meetingDomainService: MeetingDomainService) {
 
     fun createMeeting(command: CreateMeetingCommand): MeetingInfo {
         val meeting = meetingDomainService.create(command)
-        return MeetingInfo.from(meeting)
+        val count = meetingDomainService.getParticipantCount(meeting.id)
+        return MeetingInfo.from(meeting, count)
     }
 
     fun joinMeeting(command: JoinMeetingCommand) {
@@ -32,16 +33,20 @@ class MeetingFacade(private val meetingDomainService: MeetingDomainService) {
 
     fun confirmDate(command: ConfirmDateCommand): MeetingInfo {
         val meeting = meetingDomainService.confirmDate(command)
-        return MeetingInfo.from(meeting)
+        val count = meetingDomainService.getParticipantCount(meeting.id)
+        return MeetingInfo.from(meeting, count)
     }
 
     fun getMeeting(meetingId: Long): MeetingInfo {
         val meeting = meetingDomainService.getById(meetingId)
-        return MeetingInfo.from(meeting)
+        val count = meetingDomainService.getParticipantCount(meetingId)
+        return MeetingInfo.from(meeting, count)
     }
 
     fun getMyMeetings(userId: Long): List<MeetingInfo> =
-        meetingDomainService.getMyMeetings(userId).map { MeetingInfo.from(it) }
+        meetingDomainService.getMyMeetings(userId).map { meeting ->
+            MeetingInfo.from(meeting, meetingDomainService.getParticipantCount(meeting.id))
+        }
 
     fun getMyAvailability(meetingId: Long, userId: Long): List<String> =
         meetingDomainService.getMyAvailability(meetingId, userId).map { it.toString() }

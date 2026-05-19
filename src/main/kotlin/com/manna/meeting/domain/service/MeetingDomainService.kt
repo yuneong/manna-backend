@@ -76,6 +76,9 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
     fun getMyMeetings(userId: Long): List<Meeting> =
         meetingRepository.findAllByUserId(userId)
 
+    fun getParticipantCount(meetingId: Long): Int =
+        meetingRepository.findParticipantsByMeetingId(meetingId).size
+
     fun getMyAvailability(meetingId: Long, userId: Long): List<LocalDate> {
         getById(meetingId)
         return meetingRepository.findAvailabilitiesByMeetingIdAndUserId(meetingId, userId)

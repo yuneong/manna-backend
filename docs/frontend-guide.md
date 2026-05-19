@@ -201,7 +201,8 @@ POST /api/v1/meetings
   "dateRangeEnd": "2026-06-30",
   "confirmedDate": null,
   "status": "OPEN",
-  "createdAt": "2026-05-19T12:00:00"
+  "createdAt": "2026-05-19T12:00:00",
+  "participantCount": 1
 }
 ```
 

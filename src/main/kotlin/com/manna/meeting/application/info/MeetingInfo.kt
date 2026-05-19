@@ -15,9 +15,10 @@ data class MeetingInfo(
     val confirmedDate: LocalDate?,
     val status: MeetingStatus,
     val createdAt: LocalDateTime,
+    val participantCount: Int,
 ) {
     companion object {
-        fun from(meeting: Meeting) = MeetingInfo(
+        fun from(meeting: Meeting, participantCount: Int) = MeetingInfo(
             id = meeting.id,
             hostId = meeting.hostId,
             title = meeting.title,
@@ -27,6 +28,7 @@ data class MeetingInfo(
             confirmedDate = meeting.confirmedDate,
             status = meeting.status,
             createdAt = meeting.createdAt,
+            participantCount = participantCount,
         )
     }
 }

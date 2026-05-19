@@ -196,6 +196,33 @@ class MeetingDomainServiceTest {
     }
 
     @Nested
+    inner class GetParticipantCount {
+
+        @Test
+        fun `참여자 수 반환`() {
+            val found = meeting()
+            val participants = listOf(
+                MeetingParticipant(meeting = found, userId = 1L),
+                MeetingParticipant(meeting = found, userId = 2L),
+            )
+            whenever(meetingRepository.findParticipantsByMeetingId(1L)).thenReturn(participants)
+
+            val count = meetingDomainService.getParticipantCount(1L)
+
+            assertThat(count).isEqualTo(2)
+        }
+
+        @Test
+        fun `참여자가 없으면 0 반환`() {
+            whenever(meetingRepository.findParticipantsByMeetingId(1L)).thenReturn(emptyList())
+
+            val count = meetingDomainService.getParticipantCount(1L)
+
+            assertThat(count).isEqualTo(0)
+        }
+    }
+
+    @Nested
     inner class GetMyAvailability {
 
         @Test
