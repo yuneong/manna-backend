@@ -196,6 +196,26 @@ class MeetingDomainServiceTest {
     }
 
     @Nested
+    inner class IsParticipant {
+
+        @Test
+        fun `참여 중인 사용자 true 반환`() {
+            val found = meeting()
+            whenever(meetingRepository.findParticipantByMeetingIdAndUserId(1L, 2L))
+                .thenReturn(MeetingParticipant(meeting = found, userId = 2L))
+
+            assertThat(meetingDomainService.isParticipant(1L, 2L)).isTrue()
+        }
+
+        @Test
+        fun `미참여 사용자 false 반환`() {
+            whenever(meetingRepository.findParticipantByMeetingIdAndUserId(1L, 2L)).thenReturn(null)
+
+            assertThat(meetingDomainService.isParticipant(1L, 2L)).isFalse()
+        }
+    }
+
+    @Nested
     inner class GetParticipantCount {
 
         @Test

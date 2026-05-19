@@ -1,5 +1,6 @@
 package com.manna.meeting.interfaces.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.manna.meeting.application.info.MeetingInfo
 import com.manna.meeting.domain.entity.MeetingStatus
 import java.time.LocalDate
@@ -16,6 +17,8 @@ data class MeetingResponse(
     val status: MeetingStatus,
     val createdAt: LocalDateTime,
     val participantCount: Int,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val isParticipant: Boolean? = null,
 ) {
     companion object {
         fun from(info: MeetingInfo) = MeetingResponse(
@@ -29,6 +32,7 @@ data class MeetingResponse(
             status = info.status,
             createdAt = info.createdAt,
             participantCount = info.participantCount,
+            isParticipant = info.isParticipant,
         )
     }
 }

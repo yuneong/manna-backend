@@ -37,10 +37,11 @@ class MeetingFacade(private val meetingDomainService: MeetingDomainService) {
         return MeetingInfo.from(meeting, count)
     }
 
-    fun getMeeting(meetingId: Long): MeetingInfo {
+    fun getMeeting(meetingId: Long, userId: Long): MeetingInfo {
         val meeting = meetingDomainService.getById(meetingId)
         val count = meetingDomainService.getParticipantCount(meetingId)
-        return MeetingInfo.from(meeting, count)
+        val isParticipant = meetingDomainService.isParticipant(meetingId, userId)
+        return MeetingInfo.from(meeting, count, isParticipant)
     }
 
     fun getMyMeetings(userId: Long): List<MeetingInfo> =

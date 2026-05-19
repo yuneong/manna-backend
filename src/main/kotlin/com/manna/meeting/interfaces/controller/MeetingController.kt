@@ -45,9 +45,10 @@ class MeetingController(private val meetingFacade: MeetingFacade) {
     @Operation(summary = "약속방 상세 조회", security = [SecurityRequirement(name = "Bearer Authentication")])
     @GetMapping("/{meetingId}")
     fun getMeeting(
+        @AuthenticationPrincipal userId: Long,
         @PathVariable meetingId: Long,
     ): ResponseEntity<MeetingResponse> {
-        val info = meetingFacade.getMeeting(meetingId)
+        val info = meetingFacade.getMeeting(meetingId, userId)
         return ResponseEntity.ok(MeetingResponse.from(info))
     }
 

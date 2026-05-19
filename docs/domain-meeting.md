@@ -100,6 +100,7 @@ meeting/
 | `getAvailabilityHeatmap()` | `{ "날짜": 참여자수 }` 형태로 집계 |
 | `getMyAvailability()` | 특정 미팅에서 본인이 선택한 날짜 목록 반환 |
 | `getParticipantCount()` | 약속방 참여자 수 반환 |
+| `isParticipant()` | 특정 사용자의 참여 여부 반환 |
 
 ---
 
@@ -141,7 +142,20 @@ meeting/
 
 약속방 상세 조회 (인증 필요)
 
-**Response** `200 OK` — MeetingResponse
+**Response** `200 OK`
+```json
+{
+  "id": 1,
+  "hostId": 1,
+  "title": "6월 회식",
+  "participantCount": 3,
+  "isParticipant": true,
+  "status": "OPEN",
+  ...
+}
+```
+
+> `isParticipant`는 단건 조회에만 포함됩니다. 목록 조회(`/my`)에는 포함되지 않습니다.
 
 ---
 

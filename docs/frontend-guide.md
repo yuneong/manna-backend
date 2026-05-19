@@ -216,7 +216,24 @@ POST /api/v1/meetings
 GET /api/v1/meetings/{meetingId}
 ```
 
-**Response** `200` — 약속방 생성 응답과 동일한 형식
+**Response** `200`
+```json
+{
+  "id": 1,
+  "hostId": 1,
+  "title": "6월 회식",
+  "description": "팀 회식 날짜 잡기",
+  "dateRangeStart": "2026-06-01",
+  "dateRangeEnd": "2026-06-30",
+  "confirmedDate": null,
+  "status": "OPEN",
+  "createdAt": "2026-05-19T12:00:00",
+  "participantCount": 3,
+  "isParticipant": true
+}
+```
+
+> `isParticipant`: 요청한 사용자의 참여 여부. 페이지 진입 시 이 값으로 참여 여부를 판별하세요. `false`일 때만 join API를 호출하면 됩니다.
 
 ---
 

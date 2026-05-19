@@ -79,6 +79,9 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
     fun getParticipantCount(meetingId: Long): Int =
         meetingRepository.findParticipantsByMeetingId(meetingId).size
 
+    fun isParticipant(meetingId: Long, userId: Long): Boolean =
+        meetingRepository.findParticipantByMeetingIdAndUserId(meetingId, userId) != null
+
     fun getMyAvailability(meetingId: Long, userId: Long): List<LocalDate> {
         getById(meetingId)
         return meetingRepository.findAvailabilitiesByMeetingIdAndUserId(meetingId, userId)
