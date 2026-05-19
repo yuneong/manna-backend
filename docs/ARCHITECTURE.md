@@ -175,6 +175,7 @@ validateToken(token: String): Boolean // 유효성 검사
 | [domain-user.md](domain-user.md) | User 도메인 ERD, API, 레이어 흐름 |
 | [domain-meeting.md](domain-meeting.md) | Meeting 도메인 ERD, API, 레이어 흐름 |
 | [swagger.md](swagger.md) | Swagger UI 접속 및 JWT 인증 사용법 |
+| [frontend-guide.md](frontend-guide.md) | 프론트엔드 API 연동 가이드 |
 
 ---
 
