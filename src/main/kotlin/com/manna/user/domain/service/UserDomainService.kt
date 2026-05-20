@@ -46,6 +46,9 @@ class UserDomainService(
     fun getByEmail(email: String): User =
         userRepository.findByEmail(email) ?: throw MannaException(ErrorCode.USER_NOT_FOUND)
 
+    fun getUsersByIds(ids: List<Long>): List<User> =
+        userRepository.findAllByIds(ids)
+
     @Transactional
     fun withdraw(id: Long) {
         val user = getById(id)

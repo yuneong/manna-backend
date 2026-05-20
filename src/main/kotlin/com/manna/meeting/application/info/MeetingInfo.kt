@@ -5,6 +5,11 @@ import com.manna.meeting.domain.entity.MeetingStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+data class ParticipantInfo(
+    val id: Long,
+    val nickname: String,
+)
+
 data class MeetingInfo(
     val id: Long,
     val hostId: Long,
@@ -15,11 +20,13 @@ data class MeetingInfo(
     val confirmedDate: LocalDate?,
     val status: MeetingStatus,
     val createdAt: LocalDateTime,
-    val participantCount: Int,
+    val participants: List<ParticipantInfo>,
     val isParticipant: Boolean? = null,
 ) {
+    val participantCount: Int get() = participants.size
+
     companion object {
-        fun from(meeting: Meeting, participantCount: Int, isParticipant: Boolean? = null) = MeetingInfo(
+        fun from(meeting: Meeting, participants: List<ParticipantInfo>, isParticipant: Boolean? = null) = MeetingInfo(
             id = meeting.id,
             hostId = meeting.hostId,
             title = meeting.title,
@@ -29,7 +36,7 @@ data class MeetingInfo(
             confirmedDate = meeting.confirmedDate,
             status = meeting.status,
             createdAt = meeting.createdAt,
-            participantCount = participantCount,
+            participants = participants,
             isParticipant = isParticipant,
         )
     }

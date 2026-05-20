@@ -14,6 +14,7 @@ interface MeetingJpaRepository : JpaRepository<Meeting, Long> {
 interface MeetingParticipantJpaRepository : JpaRepository<MeetingParticipant, Long> {
     fun findByMeetingIdAndUserId(meetingId: Long, userId: Long): MeetingParticipant?
     fun findByMeetingId(meetingId: Long): List<MeetingParticipant>
+    fun findByMeetingIdIn(meetingIds: List<Long>): List<MeetingParticipant>
 }
 
 interface AvailabilityJpaRepository : JpaRepository<Availability, Long> {

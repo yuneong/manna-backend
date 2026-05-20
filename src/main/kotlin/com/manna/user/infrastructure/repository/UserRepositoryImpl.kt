@@ -21,4 +21,7 @@ class UserRepositoryImpl(
 
     override fun existsByEmail(email: String): Boolean =
         userJpaRepository.existsByEmailAndDeletedAtIsNull(email)
+
+    override fun findAllByIds(ids: List<Long>): List<User> =
+        userJpaRepository.findByIdInAndDeletedAtIsNull(ids)
 }

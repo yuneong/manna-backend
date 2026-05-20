@@ -12,6 +12,7 @@ interface MeetingRepository {
     fun saveParticipant(participant: MeetingParticipant): MeetingParticipant
     fun findParticipantByMeetingIdAndUserId(meetingId: Long, userId: Long): MeetingParticipant?
     fun findParticipantsByMeetingId(meetingId: Long): List<MeetingParticipant>
+    fun findParticipantsByMeetingIds(meetingIds: List<Long>): List<MeetingParticipant>
 
     fun saveAvailability(availability: Availability): Availability
     fun deleteAvailabilitiesByMeetingIdAndUserId(meetingId: Long, userId: Long)

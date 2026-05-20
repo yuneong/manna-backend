@@ -6,6 +6,11 @@ import com.manna.meeting.domain.entity.MeetingStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+data class ParticipantDto(
+    val id: Long,
+    val nickname: String,
+)
+
 data class MeetingResponse(
     val id: Long,
     val hostId: Long,
@@ -17,6 +22,7 @@ data class MeetingResponse(
     val status: MeetingStatus,
     val createdAt: LocalDateTime,
     val participantCount: Int,
+    val participants: List<ParticipantDto>,
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val isParticipant: Boolean? = null,
 ) {
@@ -32,6 +38,7 @@ data class MeetingResponse(
             status = info.status,
             createdAt = info.createdAt,
             participantCount = info.participantCount,
+            participants = info.participants.map { ParticipantDto(it.id, it.nickname) },
             isParticipant = info.isParticipant,
         )
     }

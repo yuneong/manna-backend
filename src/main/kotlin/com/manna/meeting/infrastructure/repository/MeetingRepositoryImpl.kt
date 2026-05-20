@@ -35,6 +35,9 @@ class MeetingRepositoryImpl(
     override fun findParticipantsByMeetingId(meetingId: Long): List<MeetingParticipant> =
         participantJpaRepository.findByMeetingId(meetingId)
 
+    override fun findParticipantsByMeetingIds(meetingIds: List<Long>): List<MeetingParticipant> =
+        participantJpaRepository.findByMeetingIdIn(meetingIds)
+
     override fun saveAvailability(availability: Availability): Availability =
         availabilityJpaRepository.save(availability)
 
