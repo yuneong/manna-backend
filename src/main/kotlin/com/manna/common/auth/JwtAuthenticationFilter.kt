@@ -17,10 +17,15 @@ class JwtAuthenticationFilter(
         filterChain: FilterChain,
     ) {
         val token = resolveToken(request)
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            val userId = jwtTokenProvider.getUserId(token)
-            val auth = UsernamePasswordAuthenticationToken(userId, null, emptyList())
-            SecurityContextHolder.getContext().authentication = auth
+        if (token != null) {
+            if (jwtTokenProvider.validateToken(token)) {
+                val userId = jwtTokenProvider.getUserId(token)
+                val auth = UsernamePasswordAuthenticationToken(userId, null, emptyList())
+                SecurityContextHolder.getContext().authentication = auth
+            } else {
+                sendUnauthorized(response, "유효하지 않은 토큰입니다")
+                return
+            }
         }
         filterChain.doFilter(request, response)
     }
@@ -28,5 +33,11 @@ class JwtAuthenticationFilter(
     private fun resolveToken(request: HttpServletRequest): String? {
         val bearer = request.getHeader("Authorization") ?: return null
         return if (bearer.startsWith("Bearer ")) bearer.substring(7) else null
+    }
+
+    private fun sendUnauthorized(response: HttpServletResponse, message: String) {
+        response.status = HttpServletResponse.SC_UNAUTHORIZED
+        response.contentType = "application/json;charset=UTF-8"
+        response.writer.write("""{"status":401,"message":"$message"}""")
     }
 }

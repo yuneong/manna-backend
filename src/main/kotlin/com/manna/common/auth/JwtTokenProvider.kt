@@ -32,7 +32,7 @@ class JwtTokenProvider(private val jwtProperties: JwtProperties) {
         try {
             parseClaims(token)
             true
-        } catch (e: JwtException) {
+        } catch (e: MannaException) {
             false
         } catch (e: IllegalArgumentException) {
             false

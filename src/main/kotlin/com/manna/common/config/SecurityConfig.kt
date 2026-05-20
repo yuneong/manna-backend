@@ -2,6 +2,7 @@ package com.manna.common.config
 
 import com.manna.common.auth.JwtAuthenticationFilter
 import com.manna.common.auth.JwtTokenProvider
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -50,6 +51,13 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.POST, "/api/v1/users/sign-up", "/api/v1/users/login").permitAll()
                     .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
+            }
+            .exceptionHandling { ex ->
+                ex.authenticationEntryPoint { _, response, _ ->
+                    response.status = HttpServletResponse.SC_UNAUTHORIZED
+                    response.contentType = "application/json;charset=UTF-8"
+                    response.writer.write("""{"status":401,"message":"로그인이 필요합니다"}""")
+                }
             }
             .addFilterBefore(
                 JwtAuthenticationFilter(jwtTokenProvider),
