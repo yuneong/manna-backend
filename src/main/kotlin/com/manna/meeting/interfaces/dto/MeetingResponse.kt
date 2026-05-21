@@ -22,6 +22,7 @@ data class MeetingResponse(
     val status: MeetingStatus,
     val createdAt: LocalDateTime,
     val participantCount: Int,
+    val responseCount: Int,
     val participants: List<ParticipantDto>,
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val isParticipant: Boolean? = null,
@@ -38,6 +39,7 @@ data class MeetingResponse(
             status = info.status,
             createdAt = info.createdAt,
             participantCount = info.participantCount,
+            responseCount = info.responseCount,
             participants = info.participants.map { ParticipantDto(it.id, it.nickname) },
             isParticipant = info.isParticipant,
         )

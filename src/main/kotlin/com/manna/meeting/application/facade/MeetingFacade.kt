@@ -19,8 +19,10 @@ class MeetingFacade(
 
     fun createMeeting(command: CreateMeetingCommand): MeetingInfo {
         val meeting = meetingDomainService.create(command)
-        val participants = resolveParticipants(listOf(meeting.id))
-        return MeetingInfo.from(meeting, participants[meeting.id] ?: emptyList())
+        val meetingIds = listOf(meeting.id)
+        val participants = resolveParticipants(meetingIds)
+        val responseCount = resolveResponseCounts(meetingIds)[meeting.id] ?: 0
+        return MeetingInfo.from(meeting, participants[meeting.id] ?: emptyList(), responseCount)
     }
 
     fun joinMeeting(command: JoinMeetingCommand) {
@@ -38,8 +40,10 @@ class MeetingFacade(
 
     fun confirmDate(command: ConfirmDateCommand): MeetingInfo {
         val meeting = meetingDomainService.confirmDate(command)
-        val participants = resolveParticipants(listOf(meeting.id))
-        return MeetingInfo.from(meeting, participants[meeting.id] ?: emptyList())
+        val meetingIds = listOf(meeting.id)
+        val participants = resolveParticipants(meetingIds)
+        val responseCount = resolveResponseCounts(meetingIds)[meeting.id] ?: 0
+        return MeetingInfo.from(meeting, participants[meeting.id] ?: emptyList(), responseCount)
     }
 
     fun getMeeting(meetingId: Long, userId: Long): MeetingInfo {
@@ -47,20 +51,32 @@ class MeetingFacade(
         val participantsByMeeting = resolveParticipants(listOf(meetingId))
         val participants = participantsByMeeting[meetingId] ?: emptyList()
         val isParticipant = participants.any { it.id == userId }
-        return MeetingInfo.from(meeting, participants, isParticipant)
+        val responseCount = resolveResponseCounts(listOf(meetingId))[meetingId] ?: 0
+        return MeetingInfo.from(meeting, participants, responseCount, isParticipant)
     }
 
     fun getMyMeetings(userId: Long): List<MeetingInfo> {
         val meetings = meetingDomainService.getMyMeetings(userId)
         if (meetings.isEmpty()) return emptyList()
-        val participantsByMeeting = resolveParticipants(meetings.map { it.id })
+        val meetingIds = meetings.map { it.id }
+        val participantsByMeeting = resolveParticipants(meetingIds)
+        val responseCountByMeeting = resolveResponseCounts(meetingIds)
         return meetings.map { meeting ->
-            MeetingInfo.from(meeting, participantsByMeeting[meeting.id] ?: emptyList())
+            MeetingInfo.from(
+                meeting,
+                participantsByMeeting[meeting.id] ?: emptyList(),
+                responseCountByMeeting[meeting.id] ?: 0,
+            )
         }
     }
 
     fun getMyAvailability(meetingId: Long, userId: Long): List<String> =
         meetingDomainService.getMyAvailability(meetingId, userId).map { it.toString() }
+
+    private fun resolveResponseCounts(meetingIds: List<Long>): Map<Long, Int> =
+        meetingDomainService.getAvailabilitiesByMeetingIds(meetingIds)
+            .groupBy { it.meeting.id }
+            .mapValues { (_, list) -> list.map { it.userId }.distinct().size }
 
     private fun resolveParticipants(meetingIds: List<Long>): Map<Long, List<ParticipantInfo>> {
         val allParticipants = meetingDomainService.getParticipantsByMeetingIds(meetingIds)

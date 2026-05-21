@@ -21,12 +21,18 @@ data class MeetingInfo(
     val status: MeetingStatus,
     val createdAt: LocalDateTime,
     val participants: List<ParticipantInfo>,
+    val responseCount: Int = 0,
     val isParticipant: Boolean? = null,
 ) {
     val participantCount: Int get() = participants.size
 
     companion object {
-        fun from(meeting: Meeting, participants: List<ParticipantInfo>, isParticipant: Boolean? = null) = MeetingInfo(
+        fun from(
+            meeting: Meeting,
+            participants: List<ParticipantInfo>,
+            responseCount: Int = 0,
+            isParticipant: Boolean? = null,
+        ) = MeetingInfo(
             id = meeting.id,
             hostId = meeting.hostId,
             title = meeting.title,
@@ -37,6 +43,7 @@ data class MeetingInfo(
             status = meeting.status,
             createdAt = meeting.createdAt,
             participants = participants,
+            responseCount = responseCount,
             isParticipant = isParticipant,
         )
     }

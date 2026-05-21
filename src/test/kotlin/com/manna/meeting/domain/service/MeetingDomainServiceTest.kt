@@ -279,6 +279,35 @@ class MeetingDomainServiceTest {
     }
 
     @Nested
+    inner class GetAvailabilitiesByMeetingIds {
+
+        @Test
+        fun `여러 meetingId의 availability 일괄 조회`() {
+            val m1 = meeting(id = 1L)
+            val m2 = meeting(id = 2L)
+            val availabilities = listOf(
+                Availability(meeting = m1, userId = 1L, availableDate = LocalDate.of(2025, 6, 10)),
+                Availability(meeting = m2, userId = 2L, availableDate = LocalDate.of(2025, 6, 11)),
+            )
+
+            whenever(meetingRepository.findAvailabilitiesByMeetingIds(listOf(1L, 2L))).thenReturn(availabilities)
+
+            val result = meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L, 2L))
+
+            assertThat(result).hasSize(2)
+        }
+
+        @Test
+        fun `availability 없으면 빈 리스트 반환`() {
+            whenever(meetingRepository.findAvailabilitiesByMeetingIds(listOf(1L))).thenReturn(emptyList())
+
+            val result = meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L))
+
+            assertThat(result).isEmpty()
+        }
+    }
+
+    @Nested
     inner class GetAvailabilityHeatmap {
 
         @Test
