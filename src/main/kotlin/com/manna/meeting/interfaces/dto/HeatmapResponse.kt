@@ -2,20 +2,20 @@ package com.manna.meeting.interfaces.dto
 
 import com.manna.meeting.application.info.ScheduleHeatmapInfo
 
-data class DateAvailabilityEntry(
+data class DateScheduleEntry(
     val count: Int,
     val availableParticipantIds: List<Long>,
 )
 
 data class HeatmapResponse(
     val meetingId: Long,
-    val heatmap: Map<String, DateAvailabilityEntry>,
+    val heatmap: Map<String, DateScheduleEntry>,
 ) {
     companion object {
         fun from(info: ScheduleHeatmapInfo) = HeatmapResponse(
             meetingId = info.meetingId,
             heatmap = info.heatmap.mapValues { (_, userIds) ->
-                DateAvailabilityEntry(count = userIds.size, availableParticipantIds = userIds)
+                DateScheduleEntry(count = userIds.size, availableParticipantIds = userIds)
             },
         )
     }
