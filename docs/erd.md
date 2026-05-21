@@ -11,7 +11,7 @@ meetings ──────────────── meeting_participants
     │                           │
     │                     user_id (FK 없음)
     │
-    └──────────────────── availability
+    └──────────────────── meeting_schedules
                                 │
                           user_id (FK 없음)
 ```
@@ -84,19 +84,19 @@ CREATE TABLE meeting_participants
   COLLATE = utf8mb4_unicode_ci;
 ```
 
-### availability
+### meeting_schedules
 
 ```sql
-CREATE TABLE availability
+CREATE TABLE meeting_schedules
 (
     id             BIGINT NOT NULL AUTO_INCREMENT,
     meeting_id     BIGINT NOT NULL,
     user_id        BIGINT NOT NULL,
-    available_date DATE   NOT NULL,
+    scheduled_date DATE   NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_availability (meeting_id, user_id, available_date),
-    INDEX idx_availability_meeting_id (meeting_id),
-    CONSTRAINT fk_availability_meeting
+    UNIQUE KEY uq_meeting_schedules (meeting_id, user_id, scheduled_date),
+    INDEX idx_meeting_schedules_meeting_id (meeting_id),
+    CONSTRAINT fk_meeting_schedules_meeting
         FOREIGN KEY (meeting_id) REFERENCES meetings (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -113,8 +113,8 @@ CREATE TABLE availability
 | `meetings` | `idx_meetings_host_id` | 방장 기준 약속방 조회 |
 | `meetings` | `idx_meetings_status` | 상태 필터링 |
 | `meeting_participants` | `uq_meeting_participants` (UNIQUE) | 중복 참여 방지 |
-| `availability` | `uq_availability` (UNIQUE) | 날짜 중복 등록 방지 |
-| `availability` | `idx_availability_meeting_id` | 약속방 기준 가용 날짜 조회 |
+| `meeting_schedules` | `uq_meeting_schedules` (UNIQUE) | 날짜 중복 등록 방지 |
+| `meeting_schedules` | `idx_meeting_schedules_meeting_id` | 약속방 기준 약속 날짜 조회 |
 
 ---
 
@@ -135,3 +135,4 @@ CREATE TABLE availability
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v1.0.0 | 2026-05-19 | 최초 작성 — users, meetings, meeting_participants, availability |
+| v1.1.0 | 2026-05-21 | availability → meeting_schedules 테이블 rename, available_date → scheduled_date |

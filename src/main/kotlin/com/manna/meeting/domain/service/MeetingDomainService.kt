@@ -5,10 +5,10 @@ import com.manna.common.exception.MannaException
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
-import com.manna.meeting.application.command.UpdateAvailabilityCommand
-import com.manna.meeting.domain.entity.Availability
+import com.manna.meeting.application.command.UpdateScheduleCommand
 import com.manna.meeting.domain.entity.Meeting
 import com.manna.meeting.domain.entity.MeetingParticipant
+import com.manna.meeting.domain.entity.MeetingSchedule
 import com.manna.meeting.domain.repository.MeetingRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -44,15 +44,15 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
     }
 
     @Transactional
-    fun updateAvailability(command: UpdateAvailabilityCommand) {
+    fun updateSchedule(command: UpdateScheduleCommand) {
         val meeting = getById(command.meetingId)
         meeting.requireOpen()
-        meetingRepository.deleteAvailabilitiesByMeetingIdAndUserId(command.meetingId, command.userId)
-        command.availableDates.forEach { date ->
+        meetingRepository.deleteSchedulesByMeetingIdAndUserId(command.meetingId, command.userId)
+        command.scheduledDates.forEach { date ->
             if (date < meeting.dateRangeStart || date > meeting.dateRangeEnd) {
                 throw MannaException(ErrorCode.DATE_OUT_OF_RANGE)
             }
-            meetingRepository.saveAvailability(Availability(meeting = meeting, userId = command.userId, availableDate = date))
+            meetingRepository.saveSchedule(MeetingSchedule(meeting = meeting, userId = command.userId, scheduledDate = date))
         }
     }
 
@@ -66,9 +66,9 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
     fun getById(id: Long): Meeting =
         meetingRepository.findById(id) ?: throw MannaException(ErrorCode.MEETING_NOT_FOUND)
 
-    fun getAvailabilityHeatmap(meetingId: Long): Map<String, List<Long>> =
-        meetingRepository.findAvailabilitiesByMeetingId(meetingId)
-            .groupBy { it.availableDate.toString() }
+    fun getScheduleHeatmap(meetingId: Long): Map<String, List<Long>> =
+        meetingRepository.findSchedulesByMeetingId(meetingId)
+            .groupBy { it.scheduledDate.toString() }
             .mapValues { (_, list) -> list.map { it.userId } }
 
     fun getMyMeetings(userId: Long): List<Meeting> =
@@ -83,12 +83,12 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
     fun isParticipant(meetingId: Long, userId: Long): Boolean =
         meetingRepository.findParticipantByMeetingIdAndUserId(meetingId, userId) != null
 
-    fun getAvailabilitiesByMeetingIds(meetingIds: List<Long>): List<Availability> =
-        meetingRepository.findAvailabilitiesByMeetingIds(meetingIds)
+    fun getSchedulesByMeetingIds(meetingIds: List<Long>): List<MeetingSchedule> =
+        meetingRepository.findSchedulesByMeetingIds(meetingIds)
 
-    fun getMyAvailability(meetingId: Long, userId: Long): List<LocalDate> {
+    fun getMySchedules(meetingId: Long, userId: Long): List<LocalDate> {
         getById(meetingId)
-        return meetingRepository.findAvailabilitiesByMeetingIdAndUserId(meetingId, userId)
-            .map { it.availableDate }
+        return meetingRepository.findSchedulesByMeetingIdAndUserId(meetingId, userId)
+            .map { it.scheduledDate }
     }
 }

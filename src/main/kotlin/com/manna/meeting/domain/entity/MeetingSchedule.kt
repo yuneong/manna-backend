@@ -12,8 +12,8 @@ import jakarta.persistence.Table
 import java.time.LocalDate
 
 @Entity
-@Table(name = "availability")
-class Availability(
+@Table(name = "meeting_schedules")
+class MeetingSchedule(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
@@ -26,5 +26,5 @@ class Availability(
     val userId: Long,
 
     @Column(nullable = false)
-    val availableDate: LocalDate,
+    val scheduledDate: LocalDate,
 )

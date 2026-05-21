@@ -5,8 +5,8 @@ import com.manna.common.exception.MannaException
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
-import com.manna.meeting.application.command.UpdateAvailabilityCommand
-import com.manna.meeting.domain.entity.Availability
+import com.manna.meeting.application.command.UpdateScheduleCommand
+import com.manna.meeting.domain.entity.MeetingSchedule
 import com.manna.meeting.domain.entity.Meeting
 import com.manna.meeting.domain.entity.MeetingParticipant
 import com.manna.meeting.domain.entity.MeetingStatus
@@ -129,36 +129,36 @@ class MeetingDomainServiceTest {
     }
 
     @Nested
-    inner class UpdateAvailability {
+    inner class UpdateSchedule {
 
         @Test
-        fun `가용 날짜 등록 성공 시 기존 삭제 후 신규 저장`() {
+        fun `약속 날짜 등록 성공 시 기존 삭제 후 신규 저장`() {
             val dates = listOf(LocalDate.of(2025, 6, 10), LocalDate.of(2025, 6, 15))
-            val command = UpdateAvailabilityCommand(meetingId = 1L, userId = 2L, availableDates = dates)
+            val command = UpdateScheduleCommand(meetingId = 1L, userId = 2L, scheduledDates = dates)
             val found = meeting()
 
             whenever(meetingRepository.findById(command.meetingId)).thenReturn(found)
-            whenever(meetingRepository.saveAvailability(any())).thenAnswer { it.arguments[0] as Availability }
+            whenever(meetingRepository.saveSchedule(any())).thenAnswer { it.arguments[0] as MeetingSchedule }
 
-            meetingDomainService.updateAvailability(command)
+            meetingDomainService.updateSchedule(command)
 
-            verify(meetingRepository).deleteAvailabilitiesByMeetingIdAndUserId(command.meetingId, command.userId)
-            verify(meetingRepository, times(dates.size)).saveAvailability(any())
+            verify(meetingRepository).deleteSchedulesByMeetingIdAndUserId(command.meetingId, command.userId)
+            verify(meetingRepository, times(dates.size)).saveSchedule(any())
         }
 
         @Test
         fun `날짜 범위를 벗어난 날짜 포함 시 DATE_OUT_OF_RANGE 예외`() {
-            val command = UpdateAvailabilityCommand(
+            val command = UpdateScheduleCommand(
                 meetingId = 1L, userId = 2L,
-                availableDates = listOf(LocalDate.of(2025, 7, 5)),
+                scheduledDates = listOf(LocalDate.of(2025, 7, 5)),
             )
 
             whenever(meetingRepository.findById(command.meetingId)).thenReturn(meeting())
-            whenever(meetingRepository.deleteAvailabilitiesByMeetingIdAndUserId(any(), any())).then {}
+            whenever(meetingRepository.deleteSchedulesByMeetingIdAndUserId(any(), any())).then {}
 
-            val ex = assertThrows<MannaException> { meetingDomainService.updateAvailability(command) }
+            val ex = assertThrows<MannaException> { meetingDomainService.updateSchedule(command) }
             assertThat(ex.errorCode).isEqualTo(ErrorCode.DATE_OUT_OF_RANGE)
-            verify(meetingRepository, never()).saveAvailability(any())
+            verify(meetingRepository, never()).saveSchedule(any())
         }
     }
 
@@ -243,18 +243,18 @@ class MeetingDomainServiceTest {
     }
 
     @Nested
-    inner class GetMyAvailability {
+    inner class GetMySchedules {
 
         @Test
-        fun `내 가용 날짜 목록 반환`() {
+        fun `내 약속 날짜 목록 반환`() {
             val found = meeting()
             val dates = listOf(LocalDate.of(2025, 6, 10), LocalDate.of(2025, 6, 15))
-            val availabilities = dates.map { Availability(meeting = found, userId = 2L, availableDate = it) }
+            val schedules = dates.map { MeetingSchedule(meeting = found, userId = 2L, scheduledDate = it) }
 
             whenever(meetingRepository.findById(1L)).thenReturn(found)
-            whenever(meetingRepository.findAvailabilitiesByMeetingIdAndUserId(1L, 2L)).thenReturn(availabilities)
+            whenever(meetingRepository.findSchedulesByMeetingIdAndUserId(1L, 2L)).thenReturn(schedules)
 
-            val result = meetingDomainService.getMyAvailability(1L, 2L)
+            val result = meetingDomainService.getMySchedules(1L, 2L)
 
             assertThat(result).containsExactlyElementsOf(dates)
         }
@@ -263,75 +263,75 @@ class MeetingDomainServiceTest {
         fun `존재하지 않는 약속방 조회 시 MEETING_NOT_FOUND 예외`() {
             whenever(meetingRepository.findById(999L)).thenReturn(null)
 
-            val ex = assertThrows<MannaException> { meetingDomainService.getMyAvailability(999L, 2L) }
+            val ex = assertThrows<MannaException> { meetingDomainService.getMySchedules(999L, 2L) }
             assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_FOUND)
         }
 
         @Test
         fun `등록한 날짜가 없으면 빈 리스트 반환`() {
             whenever(meetingRepository.findById(1L)).thenReturn(meeting())
-            whenever(meetingRepository.findAvailabilitiesByMeetingIdAndUserId(1L, 2L)).thenReturn(emptyList())
+            whenever(meetingRepository.findSchedulesByMeetingIdAndUserId(1L, 2L)).thenReturn(emptyList())
 
-            val result = meetingDomainService.getMyAvailability(1L, 2L)
+            val result = meetingDomainService.getMySchedules(1L, 2L)
 
             assertThat(result).isEmpty()
         }
     }
 
     @Nested
-    inner class GetAvailabilitiesByMeetingIds {
+    inner class GetSchedulesByMeetingIds {
 
         @Test
-        fun `여러 meetingId의 availability 일괄 조회`() {
+        fun `여러 meetingId의 schedule 일괄 조회`() {
             val m1 = meeting(id = 1L)
             val m2 = meeting(id = 2L)
-            val availabilities = listOf(
-                Availability(meeting = m1, userId = 1L, availableDate = LocalDate.of(2025, 6, 10)),
-                Availability(meeting = m2, userId = 2L, availableDate = LocalDate.of(2025, 6, 11)),
+            val schedules = listOf(
+                MeetingSchedule(meeting = m1, userId = 1L, scheduledDate = LocalDate.of(2025, 6, 10)),
+                MeetingSchedule(meeting = m2, userId = 2L, scheduledDate = LocalDate.of(2025, 6, 11)),
             )
 
-            whenever(meetingRepository.findAvailabilitiesByMeetingIds(listOf(1L, 2L))).thenReturn(availabilities)
+            whenever(meetingRepository.findSchedulesByMeetingIds(listOf(1L, 2L))).thenReturn(schedules)
 
-            val result = meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L, 2L))
+            val result = meetingDomainService.getSchedulesByMeetingIds(listOf(1L, 2L))
 
             assertThat(result).hasSize(2)
         }
 
         @Test
-        fun `availability 없으면 빈 리스트 반환`() {
-            whenever(meetingRepository.findAvailabilitiesByMeetingIds(listOf(1L))).thenReturn(emptyList())
+        fun `schedule 없으면 빈 리스트 반환`() {
+            whenever(meetingRepository.findSchedulesByMeetingIds(listOf(1L))).thenReturn(emptyList())
 
-            val result = meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L))
+            val result = meetingDomainService.getSchedulesByMeetingIds(listOf(1L))
 
             assertThat(result).isEmpty()
         }
     }
 
     @Nested
-    inner class GetAvailabilityHeatmap {
+    inner class GetScheduleHeatmap {
 
         @Test
         fun `날짜별 참여 가능 userId 목록 집계`() {
             val found = meeting()
-            val availabilities = listOf(
-                Availability(meeting = found, userId = 1L, availableDate = LocalDate.of(2025, 6, 10)),
-                Availability(meeting = found, userId = 2L, availableDate = LocalDate.of(2025, 6, 10)),
-                Availability(meeting = found, userId = 3L, availableDate = LocalDate.of(2025, 6, 15)),
+            val schedules = listOf(
+                MeetingSchedule(meeting = found, userId = 1L, scheduledDate = LocalDate.of(2025, 6, 10)),
+                MeetingSchedule(meeting = found, userId = 2L, scheduledDate = LocalDate.of(2025, 6, 10)),
+                MeetingSchedule(meeting = found, userId = 3L, scheduledDate = LocalDate.of(2025, 6, 15)),
             )
 
-            whenever(meetingRepository.findAvailabilitiesByMeetingId(1L)).thenReturn(availabilities)
+            whenever(meetingRepository.findSchedulesByMeetingId(1L)).thenReturn(schedules)
 
-            val result = meetingDomainService.getAvailabilityHeatmap(1L)
+            val result = meetingDomainService.getScheduleHeatmap(1L)
 
             assertThat(result["2025-06-10"]).containsExactlyInAnyOrder(1L, 2L)
             assertThat(result["2025-06-15"]).containsExactly(3L)
         }
 
         @Test
-        fun `가용 날짜가 없으면 빈 맵 반환`() {
-            whenever(meetingRepository.findAvailabilitiesByMeetingId(1L)).thenReturn(emptyList())
+        fun `schedule 없으면 빈 맵 반환`() {
+            whenever(meetingRepository.findSchedulesByMeetingId(1L)).thenReturn(emptyList())
 
-            val result = meetingDomainService.getAvailabilityHeatmap(1L)
+            val result = meetingDomainService.getScheduleHeatmap(1L)
 
             assertThat(result).isEmpty()
         }

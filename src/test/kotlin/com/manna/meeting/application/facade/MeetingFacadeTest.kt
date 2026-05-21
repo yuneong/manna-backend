@@ -1,9 +1,9 @@
 package com.manna.meeting.application.facade
 
 import com.manna.meeting.application.command.CreateMeetingCommand
-import com.manna.meeting.domain.entity.Availability
 import com.manna.meeting.domain.entity.Meeting
 import com.manna.meeting.domain.entity.MeetingParticipant
+import com.manna.meeting.domain.entity.MeetingSchedule
 import com.manna.meeting.domain.entity.MeetingStatus
 import com.manna.meeting.domain.service.MeetingDomainService
 import com.manna.user.domain.entity.User
@@ -58,16 +58,16 @@ class MeetingFacadeTest {
                 MeetingParticipant(meeting = meeting, userId = 2L),
                 MeetingParticipant(meeting = meeting, userId = 3L),
             )
-            // 3명 참여 중 2명만 availability 등록
-            val availabilities = listOf(
-                Availability(meeting = meeting, userId = 1L, availableDate = LocalDate.of(2025, 6, 10)),
-                Availability(meeting = meeting, userId = 1L, availableDate = LocalDate.of(2025, 6, 11)),
-                Availability(meeting = meeting, userId = 2L, availableDate = LocalDate.of(2025, 6, 10)),
+            // 3명 참여 중 2명만 schedule 등록
+            val schedules = listOf(
+                MeetingSchedule(meeting = meeting, userId = 1L, scheduledDate = LocalDate.of(2025, 6, 10)),
+                MeetingSchedule(meeting = meeting, userId = 1L, scheduledDate = LocalDate.of(2025, 6, 11)),
+                MeetingSchedule(meeting = meeting, userId = 2L, scheduledDate = LocalDate.of(2025, 6, 10)),
             )
 
             whenever(meetingDomainService.getById(1L)).thenReturn(meeting)
             whenever(meetingDomainService.getParticipantsByMeetingIds(listOf(1L))).thenReturn(participants)
-            whenever(meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L))).thenReturn(availabilities)
+            whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L))).thenReturn(schedules)
             whenever(userDomainService.getUsersByIds(listOf(1L, 2L, 3L)))
                 .thenReturn(listOf(user(1L), user(2L), user(3L)))
 
@@ -79,13 +79,13 @@ class MeetingFacadeTest {
         }
 
         @Test
-        fun `availability 없으면 responseCount는 0`() {
+        fun `schedule 없으면 responseCount는 0`() {
             val meeting = meeting(id = 1L)
             val participants = listOf(MeetingParticipant(meeting = meeting, userId = 1L))
 
             whenever(meetingDomainService.getById(1L)).thenReturn(meeting)
             whenever(meetingDomainService.getParticipantsByMeetingIds(listOf(1L))).thenReturn(participants)
-            whenever(meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L))).thenReturn(emptyList())
+            whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L))).thenReturn(emptyList())
             whenever(userDomainService.getUsersByIds(listOf(1L))).thenReturn(listOf(user(1L)))
 
             val result = meetingFacade.getMeeting(meetingId = 1L, userId = 1L)
@@ -106,15 +106,15 @@ class MeetingFacadeTest {
                 MeetingParticipant(meeting = m1, userId = 2L),
                 MeetingParticipant(meeting = m2, userId = 1L),
             )
-            val availabilities = listOf(
-                Availability(meeting = m1, userId = 1L, availableDate = LocalDate.of(2025, 6, 10)),
-                Availability(meeting = m2, userId = 1L, availableDate = LocalDate.of(2025, 6, 11)),
-                Availability(meeting = m2, userId = 1L, availableDate = LocalDate.of(2025, 6, 12)),
+            val schedules = listOf(
+                MeetingSchedule(meeting = m1, userId = 1L, scheduledDate = LocalDate.of(2025, 6, 10)),
+                MeetingSchedule(meeting = m2, userId = 1L, scheduledDate = LocalDate.of(2025, 6, 11)),
+                MeetingSchedule(meeting = m2, userId = 1L, scheduledDate = LocalDate.of(2025, 6, 12)),
             )
 
             whenever(meetingDomainService.getMyMeetings(1L)).thenReturn(listOf(m1, m2))
             whenever(meetingDomainService.getParticipantsByMeetingIds(listOf(1L, 2L))).thenReturn(participants)
-            whenever(meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L, 2L))).thenReturn(availabilities)
+            whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L, 2L))).thenReturn(schedules)
             whenever(userDomainService.getUsersByIds(listOf(1L, 2L)))
                 .thenReturn(listOf(user(1L), user(2L)))
 
@@ -145,7 +145,7 @@ class MeetingFacadeTest {
 
             whenever(meetingDomainService.create(command)).thenReturn(meeting)
             whenever(meetingDomainService.getParticipantsByMeetingIds(listOf(1L))).thenReturn(listOf(participant))
-            whenever(meetingDomainService.getAvailabilitiesByMeetingIds(listOf(1L))).thenReturn(emptyList())
+            whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L))).thenReturn(emptyList())
             whenever(userDomainService.getUsersByIds(listOf(1L))).thenReturn(listOf(user(1L)))
 
             val result = meetingFacade.createMeeting(command)
@@ -164,7 +164,7 @@ class MeetingFacadeTest {
                 "2025-06-15" to listOf(2L),
             )
 
-            whenever(meetingDomainService.getAvailabilityHeatmap(1L)).thenReturn(heatmap)
+            whenever(meetingDomainService.getScheduleHeatmap(1L)).thenReturn(heatmap)
 
             val result = meetingFacade.getHeatmap(1L)
 
@@ -173,8 +173,8 @@ class MeetingFacadeTest {
         }
 
         @Test
-        fun `availability 없으면 빈 heatmap 반환`() {
-            whenever(meetingDomainService.getAvailabilityHeatmap(1L)).thenReturn(emptyMap())
+        fun `schedule 없으면 빈 heatmap 반환`() {
+            whenever(meetingDomainService.getScheduleHeatmap(1L)).thenReturn(emptyMap())
 
             val result = meetingFacade.getHeatmap(1L)
 

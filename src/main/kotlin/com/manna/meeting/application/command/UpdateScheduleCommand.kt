@@ -2,8 +2,8 @@ package com.manna.meeting.application.command
 
 import java.time.LocalDate
 
-data class UpdateAvailabilityCommand(
+data class UpdateScheduleCommand(
     val meetingId: Long,
     val userId: Long,
-    val availableDates: List<LocalDate>,
+    val scheduledDates: List<LocalDate>,
 )

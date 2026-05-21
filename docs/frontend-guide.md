@@ -267,7 +267,7 @@ GET /api/v1/meetings/{meetingId}
 ```
 
 > - `isParticipant`: 요청한 사용자의 참여 여부. 페이지 진입 시 이 값으로 참여 여부를 판별하세요. `false`일 때만 join API를 호출하면 됩니다.
-> - `responseCount`: availability를 1개 이상 등록한 참여자 수. `participantCount`와 함께 사용해 응답률을 표시할 수 있습니다.
+> - `responseCount`: 약속 날짜(schedule)를 1개 이상 등록한 참여자 수. `participantCount`와 함께 사용해 응답률을 표시할 수 있습니다.
 > - `participants`: 참여자 id·nickname 배열. 아바타 목록 표시에 사용하세요.
 
 ---
@@ -323,10 +323,10 @@ POST /api/v1/meetings/{meetingId}/join
 
 ---
 
-### 내 가용 날짜 조회 🔒
+### 내 약속 날짜 조회 🔒
 
 ```
-GET /api/v1/meetings/{meetingId}/availability/me
+GET /api/v1/meetings/{meetingId}/schedules/me
 ```
 
 페이지 마운트 시 호출하여 캘린더의 초기 선택 상태를 복원합니다.
@@ -335,16 +335,16 @@ GET /api/v1/meetings/{meetingId}/availability/me
 ```json
 {
   "meetingId": 1,
-  "availableDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
+  "scheduledDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
 }
 ```
 
 ---
 
-### 가용 날짜 등록 🔒
+### 약속 날짜 등록 🔒
 
 ```
-PUT /api/v1/meetings/{meetingId}/availability
+PUT /api/v1/meetings/{meetingId}/schedules
 ```
 
 본인이 참여 가능한 날짜 목록을 전송합니다.
@@ -353,7 +353,7 @@ PUT /api/v1/meetings/{meetingId}/availability
 **Request**
 ```json
 {
-  "availableDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
+  "scheduledDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
 }
 ```
 

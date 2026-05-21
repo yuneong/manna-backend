@@ -89,7 +89,7 @@ src/main/kotlin/com/manna/
     │   ├── entity/
     │   │   ├── Meeting.kt
     │   │   ├── MeetingParticipant.kt
-    │   │   ├── Availability.kt
+    │   │   ├── MeetingSchedule.kt
     │   │   └── MeetingStatus.kt
     │   ├── repository/MeetingRepository.kt    ← interface (domain boundary)
     │   └── service/MeetingDomainService.kt
@@ -97,11 +97,11 @@ src/main/kotlin/com/manna/
     │   ├── command/
     │   │   ├── CreateMeetingCommand.kt
     │   │   ├── JoinMeetingCommand.kt
-    │   │   ├── UpdateAvailabilityCommand.kt
+    │   │   ├── UpdateScheduleCommand.kt
     │   │   └── ConfirmDateCommand.kt
     │   ├── info/
     │   │   ├── MeetingInfo.kt
-    │   │   └── AvailabilityHeatmapInfo.kt
+    │   │   └── ScheduleHeatmapInfo.kt
     │   └── facade/MeetingFacade.kt
     ├── infrastructure/
     │   ├── jpa/MeetingJpaRepository.kt
@@ -110,9 +110,10 @@ src/main/kotlin/com/manna/
         ├── controller/MeetingController.kt
         └── dto/
             ├── CreateMeetingRequest.kt
-            ├── UpdateAvailabilityRequest.kt
+            ├── UpdateScheduleRequest.kt
             ├── ConfirmDateRequest.kt
             ├── MeetingResponse.kt
+            ├── MyScheduleResponse.kt
             └── HeatmapResponse.kt
 ```
 

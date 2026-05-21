@@ -1,8 +1,8 @@
 package com.manna.meeting.domain.repository
 
-import com.manna.meeting.domain.entity.Availability
 import com.manna.meeting.domain.entity.Meeting
 import com.manna.meeting.domain.entity.MeetingParticipant
+import com.manna.meeting.domain.entity.MeetingSchedule
 
 interface MeetingRepository {
     fun save(meeting: Meeting): Meeting
@@ -14,9 +14,9 @@ interface MeetingRepository {
     fun findParticipantsByMeetingId(meetingId: Long): List<MeetingParticipant>
     fun findParticipantsByMeetingIds(meetingIds: List<Long>): List<MeetingParticipant>
 
-    fun saveAvailability(availability: Availability): Availability
-    fun deleteAvailabilitiesByMeetingIdAndUserId(meetingId: Long, userId: Long)
-    fun findAvailabilitiesByMeetingId(meetingId: Long): List<Availability>
-    fun findAvailabilitiesByMeetingIds(meetingIds: List<Long>): List<Availability>
-    fun findAvailabilitiesByMeetingIdAndUserId(meetingId: Long, userId: Long): List<Availability>
+    fun saveSchedule(schedule: MeetingSchedule): MeetingSchedule
+    fun deleteSchedulesByMeetingIdAndUserId(meetingId: Long, userId: Long)
+    fun findSchedulesByMeetingId(meetingId: Long): List<MeetingSchedule>
+    fun findSchedulesByMeetingIds(meetingIds: List<Long>): List<MeetingSchedule>
+    fun findSchedulesByMeetingIdAndUserId(meetingId: Long, userId: Long): List<MeetingSchedule>
 }

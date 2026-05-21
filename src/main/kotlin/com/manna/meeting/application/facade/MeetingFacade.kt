@@ -3,10 +3,10 @@ package com.manna.meeting.application.facade
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
-import com.manna.meeting.application.command.UpdateAvailabilityCommand
-import com.manna.meeting.application.info.AvailabilityHeatmapInfo
+import com.manna.meeting.application.command.UpdateScheduleCommand
 import com.manna.meeting.application.info.MeetingInfo
 import com.manna.meeting.application.info.ParticipantInfo
+import com.manna.meeting.application.info.ScheduleHeatmapInfo
 import com.manna.meeting.domain.service.MeetingDomainService
 import com.manna.user.domain.service.UserDomainService
 import org.springframework.stereotype.Component
@@ -29,13 +29,13 @@ class MeetingFacade(
         meetingDomainService.join(command)
     }
 
-    fun updateAvailability(command: UpdateAvailabilityCommand) {
-        meetingDomainService.updateAvailability(command)
+    fun updateSchedule(command: UpdateScheduleCommand) {
+        meetingDomainService.updateSchedule(command)
     }
 
-    fun getHeatmap(meetingId: Long): AvailabilityHeatmapInfo {
-        val heatmap = meetingDomainService.getAvailabilityHeatmap(meetingId)
-        return AvailabilityHeatmapInfo(meetingId = meetingId, heatmap = heatmap)
+    fun getHeatmap(meetingId: Long): ScheduleHeatmapInfo {
+        val heatmap = meetingDomainService.getScheduleHeatmap(meetingId)
+        return ScheduleHeatmapInfo(meetingId = meetingId, heatmap = heatmap)
     }
 
     fun confirmDate(command: ConfirmDateCommand): MeetingInfo {
@@ -70,11 +70,11 @@ class MeetingFacade(
         }
     }
 
-    fun getMyAvailability(meetingId: Long, userId: Long): List<String> =
-        meetingDomainService.getMyAvailability(meetingId, userId).map { it.toString() }
+    fun getMySchedules(meetingId: Long, userId: Long): List<String> =
+        meetingDomainService.getMySchedules(meetingId, userId).map { it.toString() }
 
     private fun resolveResponseCounts(meetingIds: List<Long>): Map<Long, Int> =
-        meetingDomainService.getAvailabilitiesByMeetingIds(meetingIds)
+        meetingDomainService.getSchedulesByMeetingIds(meetingIds)
             .groupBy { it.meeting.id }
             .mapValues { (_, list) -> list.map { it.userId }.distinct().size }
 

@@ -20,11 +20,11 @@ meeting_participants
 ├── user_id     BIGINT NOT NULL
 └── joined_at   DATETIME NOT NULL
 
-availability
+meeting_schedules
 ├── id              BIGINT PK AUTO_INCREMENT
 ├── meeting_id      BIGINT NOT NULL (FK → meetings)
 ├── user_id         BIGINT NOT NULL
-└── available_date  DATE NOT NULL
+└── scheduled_date  DATE NOT NULL
 ```
 
 > **도메인 분리 원칙**: `Meeting`은 `User` 엔티티를 직접 참조하지 않고 `hostId: Long`으로 ID만 보관합니다. 크로스 도메인 JPA 조인을 방지합니다.
@@ -39,7 +39,7 @@ meeting/
 │   ├── entity/
 │   │   ├── Meeting.kt
 │   │   ├── MeetingParticipant.kt
-│   │   ├── Availability.kt
+│   │   ├── MeetingSchedule.kt
 │   │   └── MeetingStatus.kt
 │   ├── repository/MeetingRepository.kt         ← 도메인 레포지터리 인터페이스
 │   └── service/MeetingDomainService.kt
@@ -47,11 +47,11 @@ meeting/
 │   ├── command/
 │   │   ├── CreateMeetingCommand.kt
 │   │   ├── JoinMeetingCommand.kt
-│   │   ├── UpdateAvailabilityCommand.kt
+│   │   ├── UpdateScheduleCommand.kt
 │   │   └── ConfirmDateCommand.kt
 │   ├── info/
 │   │   ├── MeetingInfo.kt
-│   │   └── AvailabilityHeatmapInfo.kt
+│   │   └── ScheduleHeatmapInfo.kt
 │   └── facade/MeetingFacade.kt
 ├── infrastructure/
 │   ├── jpa/MeetingJpaRepository.kt
@@ -60,10 +60,10 @@ meeting/
     ├── controller/MeetingController.kt
     └── dto/
         ├── CreateMeetingRequest.kt
-        ├── UpdateAvailabilityRequest.kt
+        ├── UpdateScheduleRequest.kt
         ├── ConfirmDateRequest.kt
         ├── MeetingResponse.kt
-        ├── MyAvailabilityResponse.kt
+        ├── MyScheduleResponse.kt
         └── HeatmapResponse.kt
 ```
 
@@ -95,10 +95,10 @@ meeting/
 |---|---|
 | `create()` | 약속방 생성 후 방장을 참여자로 자동 등록 |
 | `join()` | OPEN 상태 확인, 중복 참여 → `ALREADY_JOINED` |
-| `updateAvailability()` | 기존 가용 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
+| `updateSchedule()` | 기존 약속 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
 | `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 |
-| `getAvailabilityHeatmap()` | `{ "날짜": [userId, ...] }` 형태로 집계 (날짜별 가능한 userId 목록) |
-| `getMyAvailability()` | 특정 미팅에서 본인이 선택한 날짜 목록 반환 |
+| `getScheduleHeatmap()` | `{ "날짜": [userId, ...] }` 형태로 집계 (날짜별 가능한 userId 목록) |
+| `getMySchedules()` | 특정 미팅에서 본인이 선택한 약속 날짜 목록 반환 |
 | `getParticipantCount()` | 약속방 참여자 수 반환 |
 | `isParticipant()` | 특정 사용자의 참여 여부 반환 |
 
@@ -170,7 +170,7 @@ meeting/
 ```
 
 > - `isParticipant`: 단건 조회에만 포함됩니다. 목록 조회(`/my`)에는 포함되지 않습니다.
-> - `responseCount`: availability를 1개 이상 등록한 참여자 수 (distinct userId 기준).
+> - `responseCount`: 약속 날짜(schedule)를 1개 이상 등록한 참여자 수 (distinct userId 기준).
 
 ---
 
@@ -197,15 +197,15 @@ meeting/
 
 ---
 
-### GET /api/v1/meetings/{meetingId}/availability/me
+### GET /api/v1/meetings/{meetingId}/schedules/me
 
-내가 선택한 가용 날짜 조회 (인증 필요)
+내가 선택한 약속 날짜 조회 (인증 필요)
 
 **Response** `200 OK`
 ```json
 {
   "meetingId": 1,
-  "availableDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
+  "scheduledDates": ["2026-06-10", "2026-06-11", "2026-06-15"]
 }
 ```
 
@@ -214,14 +214,14 @@ meeting/
 
 ---
 
-### PUT /api/v1/meetings/{meetingId}/availability
+### PUT /api/v1/meetings/{meetingId}/schedules
 
-가용 날짜 등록 (인증 필요) — 기존 날짜를 모두 교체(replace)
+약속 날짜 등록 (인증 필요) — 기존 날짜를 모두 교체(replace)
 
 **Request**
 ```json
 {
-  "availableDates": ["2025-06-10", "2025-06-11", "2025-06-15"]
+  "scheduledDates": ["2025-06-10", "2025-06-11", "2025-06-15"]
 }
 ```
 

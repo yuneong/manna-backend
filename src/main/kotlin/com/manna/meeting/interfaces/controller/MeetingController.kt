@@ -6,8 +6,8 @@ import com.manna.meeting.interfaces.dto.ConfirmDateRequest
 import com.manna.meeting.interfaces.dto.CreateMeetingRequest
 import com.manna.meeting.interfaces.dto.HeatmapResponse
 import com.manna.meeting.interfaces.dto.MeetingResponse
-import com.manna.meeting.interfaces.dto.MyAvailabilityResponse
-import com.manna.meeting.interfaces.dto.UpdateAvailabilityRequest
+import com.manna.meeting.interfaces.dto.MyScheduleResponse
+import com.manna.meeting.interfaces.dto.UpdateScheduleRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -72,27 +72,27 @@ class MeetingController(private val meetingFacade: MeetingFacade) {
         return ResponseEntity.ok().build()
     }
 
-    @Operation(summary = "가용 날짜 등록", security = [SecurityRequirement(name = "Bearer Authentication")])
-    @ApiResponse(responseCode = "200", description = "기존 가용 날짜를 모두 교체(replace)")
-    @PutMapping("/{meetingId}/availability")
-    fun updateAvailability(
+    @Operation(summary = "약속 날짜 등록", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @ApiResponse(responseCode = "200", description = "기존 약속 날짜를 모두 교체(replace)")
+    @PutMapping("/{meetingId}/schedules")
+    fun updateSchedule(
         @AuthenticationPrincipal userId: Long,
         @PathVariable meetingId: Long,
-        @Valid @RequestBody request: UpdateAvailabilityRequest,
+        @Valid @RequestBody request: UpdateScheduleRequest,
     ): ResponseEntity<Unit> {
-        meetingFacade.updateAvailability(request.toCommand(meetingId, userId))
+        meetingFacade.updateSchedule(request.toCommand(meetingId, userId))
         return ResponseEntity.ok().build()
     }
 
-    @Operation(summary = "내 가용 날짜 조회", security = [SecurityRequirement(name = "Bearer Authentication")])
-    @ApiResponse(responseCode = "200", description = "내가 선택한 날짜 목록 반환")
-    @GetMapping("/{meetingId}/availability/me")
-    fun getMyAvailability(
+    @Operation(summary = "내 약속 날짜 조회", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @ApiResponse(responseCode = "200", description = "내가 선택한 약속 날짜 목록 반환")
+    @GetMapping("/{meetingId}/schedules/me")
+    fun getMySchedules(
         @AuthenticationPrincipal userId: Long,
         @PathVariable meetingId: Long,
-    ): ResponseEntity<MyAvailabilityResponse> {
-        val dates = meetingFacade.getMyAvailability(meetingId, userId)
-        return ResponseEntity.ok(MyAvailabilityResponse(meetingId = meetingId, availableDates = dates))
+    ): ResponseEntity<MyScheduleResponse> {
+        val dates = meetingFacade.getMySchedules(meetingId, userId)
+        return ResponseEntity.ok(MyScheduleResponse(meetingId = meetingId, scheduledDates = dates))
     }
 
     @Operation(summary = "가용 날짜 히트맵 조회", security = [SecurityRequirement(name = "Bearer Authentication")])
