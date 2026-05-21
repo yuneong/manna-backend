@@ -153,4 +153,32 @@ class MeetingFacadeTest {
             assertThat(result.responseCount).isEqualTo(0)
         }
     }
+
+    @Nested
+    inner class GetHeatmap {
+
+        @Test
+        fun `날짜별 availableParticipantIds와 count가 올바르게 반환된다`() {
+            val heatmap = mapOf(
+                "2025-06-10" to listOf(1L, 2L, 3L),
+                "2025-06-15" to listOf(2L),
+            )
+
+            whenever(meetingDomainService.getAvailabilityHeatmap(1L)).thenReturn(heatmap)
+
+            val result = meetingFacade.getHeatmap(1L)
+
+            assertThat(result.heatmap["2025-06-10"]).containsExactlyInAnyOrder(1L, 2L, 3L)
+            assertThat(result.heatmap["2025-06-15"]).containsExactly(2L)
+        }
+
+        @Test
+        fun `availability 없으면 빈 heatmap 반환`() {
+            whenever(meetingDomainService.getAvailabilityHeatmap(1L)).thenReturn(emptyMap())
+
+            val result = meetingFacade.getHeatmap(1L)
+
+            assertThat(result.heatmap).isEmpty()
+        }
+    }
 }

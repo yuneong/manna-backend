@@ -66,12 +66,10 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
     fun getById(id: Long): Meeting =
         meetingRepository.findById(id) ?: throw MannaException(ErrorCode.MEETING_NOT_FOUND)
 
-    fun getAvailabilityHeatmap(meetingId: Long): Map<String, Int> {
-        val availabilities = meetingRepository.findAvailabilitiesByMeetingId(meetingId)
-        return availabilities
+    fun getAvailabilityHeatmap(meetingId: Long): Map<String, List<Long>> =
+        meetingRepository.findAvailabilitiesByMeetingId(meetingId)
             .groupBy { it.availableDate.toString() }
-            .mapValues { (_, list) -> list.size }
-    }
+            .mapValues { (_, list) -> list.map { it.userId } }
 
     fun getMyMeetings(userId: Long): List<Meeting> =
         meetingRepository.findAllByUserId(userId)

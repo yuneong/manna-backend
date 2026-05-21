@@ -311,7 +311,7 @@ class MeetingDomainServiceTest {
     inner class GetAvailabilityHeatmap {
 
         @Test
-        fun `날짜별 참여 가능 인원 수 집계`() {
+        fun `날짜별 참여 가능 userId 목록 집계`() {
             val found = meeting()
             val availabilities = listOf(
                 Availability(meeting = found, userId = 1L, availableDate = LocalDate.of(2025, 6, 10)),
@@ -323,8 +323,8 @@ class MeetingDomainServiceTest {
 
             val result = meetingDomainService.getAvailabilityHeatmap(1L)
 
-            assertThat(result["2025-06-10"]).isEqualTo(2)
-            assertThat(result["2025-06-15"]).isEqualTo(1)
+            assertThat(result["2025-06-10"]).containsExactlyInAnyOrder(1L, 2L)
+            assertThat(result["2025-06-15"]).containsExactly(3L)
         }
 
         @Test
