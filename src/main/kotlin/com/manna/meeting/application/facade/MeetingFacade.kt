@@ -1,5 +1,6 @@
 package com.manna.meeting.application.facade
 
+import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
@@ -36,6 +37,14 @@ class MeetingFacade(
     fun getHeatmap(meetingId: Long): ScheduleHeatmapInfo {
         val heatmap = meetingDomainService.getScheduleHeatmap(meetingId)
         return ScheduleHeatmapInfo(meetingId = meetingId, heatmap = heatmap)
+    }
+
+    fun cancelConfirm(command: CancelConfirmCommand): MeetingInfo {
+        val meeting = meetingDomainService.cancelConfirm(command)
+        val meetingIds = listOf(meeting.id)
+        val participants = resolveParticipants(meetingIds)
+        val responseCount = resolveResponseCounts(meetingIds)[meeting.id] ?: 0
+        return MeetingInfo.from(meeting, participants[meeting.id] ?: emptyList(), responseCount)
     }
 
     fun confirmDate(command: ConfirmDateCommand): MeetingInfo {

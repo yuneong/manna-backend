@@ -403,6 +403,8 @@ GET /api/v1/meetings/{meetingId}/heatmap
 POST /api/v1/meetings/{meetingId}/confirm
 ```
 
+OPEN·CONFIRMED 상태 모두 가능합니다. CONFIRMED 상태에서 재호출하면 `confirmedDate`가 새 날짜로 업데이트됩니다.
+
 **Request**
 ```json
 {
@@ -423,8 +425,45 @@ POST /api/v1/meetings/{meetingId}/confirm
 | 에러 코드 | 상황 |
 |---|---|
 | `403` | 방장이 아닌 사용자가 요청 |
-| `400` | 이미 확정된 약속방 |
+| `400` | CANCELLED 상태 약속방 |
 | `400` | 날짜 범위를 벗어난 날짜 |
+
+---
+
+### 날짜 확정 취소 🔒 (방장 전용)
+
+```
+DELETE /api/v1/meetings/{meetingId}/confirm
+```
+
+**Request Body** 없음
+
+**Response** `200`
+```json
+{
+  "id": 1,
+  "confirmedDate": null,
+  "status": "OPEN",
+  ...
+}
+```
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 방장이 아닌 사용자가 요청 |
+| `400` | 이미 OPEN 상태인 약속방 |
+
+---
+
+### 약속 날짜 등록 추가 제한
+
+```
+PUT /api/v1/meetings/{meetingId}/schedules
+```
+
+| 에러 코드 | 상황 |
+|---|---|
+| `400` (`MEETING_ALREADY_CONFIRMED`) | CONFIRMED 상태 약속방 — 방장·참여자 모두 등록 불가 |
 
 ---
 

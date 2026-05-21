@@ -1,5 +1,6 @@
 package com.manna.meeting.interfaces.controller
 
+import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
 import com.manna.meeting.application.facade.MeetingFacade
 import com.manna.meeting.interfaces.dto.ConfirmDateRequest
@@ -16,6 +17,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -105,8 +107,19 @@ class MeetingController(private val meetingFacade: MeetingFacade) {
         return ResponseEntity.ok(HeatmapResponse.from(info))
     }
 
+    @Operation(summary = "날짜 확정 취소 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @ApiResponse(responseCode = "200", description = "확정 취소 성공 — status OPEN으로 변경, confirmedDate null")
+    @DeleteMapping("/{meetingId}/confirm")
+    fun cancelConfirm(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable meetingId: Long,
+    ): ResponseEntity<MeetingResponse> {
+        val info = meetingFacade.cancelConfirm(CancelConfirmCommand(meetingId, userId))
+        return ResponseEntity.ok(MeetingResponse.from(info))
+    }
+
     @Operation(summary = "날짜 확정 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])
-    @ApiResponse(responseCode = "200", description = "날짜 확정 성공 — status CONFIRMED로 변경")
+    @ApiResponse(responseCode = "200", description = "날짜 확정 성공 — OPEN·CONFIRMED 모두 가능, status CONFIRMED로 변경")
     @PostMapping("/{meetingId}/confirm")
     fun confirmDate(
         @AuthenticationPrincipal userId: Long,

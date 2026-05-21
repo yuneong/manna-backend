@@ -2,6 +2,7 @@ package com.manna.meeting.domain.service
 
 import com.manna.common.exception.ErrorCode
 import com.manna.common.exception.MannaException
+import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
@@ -9,6 +10,7 @@ import com.manna.meeting.application.command.UpdateScheduleCommand
 import com.manna.meeting.domain.entity.Meeting
 import com.manna.meeting.domain.entity.MeetingParticipant
 import com.manna.meeting.domain.entity.MeetingSchedule
+import com.manna.meeting.domain.entity.MeetingStatus
 import com.manna.meeting.domain.repository.MeetingRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -44,8 +46,16 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
     }
 
     @Transactional
+    fun cancelConfirm(command: CancelConfirmCommand): Meeting {
+        val meeting = getById(command.meetingId)
+        meeting.cancelConfirm(command.userId)
+        return meetingRepository.save(meeting)
+    }
+
+    @Transactional
     fun updateSchedule(command: UpdateScheduleCommand) {
         val meeting = getById(command.meetingId)
+        if (meeting.status == MeetingStatus.CONFIRMED) throw MannaException(ErrorCode.MEETING_ALREADY_CONFIRMED)
         meeting.requireOpen()
         meetingRepository.deleteSchedulesByMeetingIdAndUserId(command.meetingId, command.userId)
         command.scheduledDates.forEach { date ->

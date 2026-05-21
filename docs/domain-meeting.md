@@ -85,7 +85,8 @@ meeting/
 
 | 메서드 | 규칙 |
 |---|---|
-| `confirmDate(userId, date)` | 방장 여부 → `NOT_MEETING_HOST` / OPEN 상태 → `MEETING_NOT_OPEN` / 날짜 범위 → `DATE_OUT_OF_RANGE` |
+| `confirmDate(userId, date)` | 방장 여부 → `NOT_MEETING_HOST` / CANCELLED 상태 → `MEETING_NOT_OPEN` / 날짜 범위 → `DATE_OUT_OF_RANGE` (OPEN·CONFIRMED 모두 가능) |
+| `cancelConfirm(userId)` | 방장 여부 → `NOT_MEETING_HOST` / CONFIRMED 아니면 → `MEETING_NOT_CONFIRMED` / confirmedDate=null, status=OPEN |
 | `requireOpen()` | OPEN이 아니면 `MEETING_NOT_OPEN` |
 | `isHost(userId)` | `hostId == userId` |
 
@@ -95,8 +96,9 @@ meeting/
 |---|---|
 | `create()` | 약속방 생성 후 방장을 참여자로 자동 등록 |
 | `join()` | OPEN 상태 확인, 중복 참여 → `ALREADY_JOINED` |
-| `updateSchedule()` | 기존 약속 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
-| `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 |
+| `updateSchedule()` | CONFIRMED 상태 → `MEETING_ALREADY_CONFIRMED` / 기존 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
+| `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 (OPEN·CONFIRMED 모두 허용) |
+| `cancelConfirm()` | Meeting 엔티티의 `cancelConfirm()` 위임 |
 | `getScheduleHeatmap()` | `{ "날짜": [userId, ...] }` 형태로 집계 (날짜별 가능한 userId 목록) |
 | `getMySchedules()` | 특정 미팅에서 본인이 선택한 약속 날짜 목록 반환 |
 | `getParticipantCount()` | 약속방 참여자 수 반환 |
@@ -264,7 +266,7 @@ meeting/
 
 ### POST /api/v1/meetings/{meetingId}/confirm
 
-날짜 확정 (방장만 가능)
+날짜 확정 (방장만 가능) — OPEN·CONFIRMED 상태 모두 가능 (재확정 지원)
 
 **Request**
 ```json
@@ -277,5 +279,24 @@ meeting/
 
 **오류**
 - `NOT_MEETING_HOST` — 방장이 아닌 사용자가 요청
-- `MEETING_NOT_OPEN` — 이미 확정/취소된 약속방
+- `MEETING_NOT_OPEN` — CANCELLED 상태 약속방
 - `DATE_OUT_OF_RANGE` — 날짜 범위를 벗어난 날짜
+
+---
+
+### DELETE /api/v1/meetings/{meetingId}/confirm
+
+날짜 확정 취소 (방장만 가능)
+
+**Response** `200 OK` — MeetingResponse (`status: "OPEN"`, `confirmedDate: null`)
+
+**오류**
+- `NOT_MEETING_HOST` — 방장이 아닌 사용자가 요청
+- `MEETING_NOT_CONFIRMED` — 이미 OPEN 상태인 약속방
+
+---
+
+### PUT /api/v1/meetings/{meetingId}/schedules 추가 제한
+
+**오류**
+- `MEETING_ALREADY_CONFIRMED` — CONFIRMED 상태 약속방 (방장·참여자 모두 400)

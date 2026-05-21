@@ -2,6 +2,7 @@ package com.manna.meeting.domain.service
 
 import com.manna.common.exception.ErrorCode
 import com.manna.common.exception.MannaException
+import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
@@ -160,17 +161,48 @@ class MeetingDomainServiceTest {
             assertThat(ex.errorCode).isEqualTo(ErrorCode.DATE_OUT_OF_RANGE)
             verify(meetingRepository, never()).saveSchedule(any())
         }
+
+        @Test
+        fun `CONFIRMED 상태 약속방에 일정 등록 시 MEETING_ALREADY_CONFIRMED 예외`() {
+            val command = UpdateScheduleCommand(
+                meetingId = 1L, userId = 2L,
+                scheduledDates = listOf(LocalDate.of(2025, 6, 10)),
+            )
+
+            whenever(meetingRepository.findById(command.meetingId))
+                .thenReturn(meeting(status = MeetingStatus.CONFIRMED))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.updateSchedule(command) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_ALREADY_CONFIRMED)
+            verify(meetingRepository, never()).deleteSchedulesByMeetingIdAndUserId(any(), any())
+        }
     }
 
     @Nested
     inner class ConfirmDate {
 
         @Test
-        fun `날짜 확정 성공`() {
+        fun `OPEN 상태에서 날짜 확정 성공`() {
             val command = ConfirmDateCommand(
                 meetingId = 1L, userId = 1L, confirmedDate = LocalDate.of(2025, 6, 15),
             )
             val found = meeting(hostId = 1L)
+
+            whenever(meetingRepository.findById(command.meetingId)).thenReturn(found)
+            whenever(meetingRepository.save(any())).thenReturn(found)
+
+            val result = meetingDomainService.confirmDate(command)
+
+            assertThat(result.status).isEqualTo(MeetingStatus.CONFIRMED)
+            assertThat(result.confirmedDate).isEqualTo(command.confirmedDate)
+        }
+
+        @Test
+        fun `CONFIRMED 상태에서 재확정 성공`() {
+            val command = ConfirmDateCommand(
+                meetingId = 1L, userId = 1L, confirmedDate = LocalDate.of(2025, 6, 20),
+            )
+            val found = meeting(hostId = 1L, status = MeetingStatus.CONFIRMED)
 
             whenever(meetingRepository.findById(command.meetingId)).thenReturn(found)
             whenever(meetingRepository.save(any())).thenReturn(found)
@@ -192,6 +224,59 @@ class MeetingDomainServiceTest {
             val ex = assertThrows<MannaException> { meetingDomainService.confirmDate(command) }
             assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
             verify(meetingRepository, never()).save(any())
+        }
+
+        @Test
+        fun `CANCELLED 상태에서 확정 시도 시 MEETING_NOT_OPEN 예외`() {
+            val command = ConfirmDateCommand(
+                meetingId = 1L, userId = 1L, confirmedDate = LocalDate.of(2025, 6, 15),
+            )
+
+            whenever(meetingRepository.findById(command.meetingId))
+                .thenReturn(meeting(hostId = 1L, status = MeetingStatus.CANCELLED))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.confirmDate(command) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_OPEN)
+        }
+    }
+
+    @Nested
+    inner class CancelConfirm {
+
+        @Test
+        fun `확정 취소 성공 — status OPEN, confirmedDate null`() {
+            val command = CancelConfirmCommand(meetingId = 1L, userId = 1L)
+            val found = meeting(hostId = 1L, status = MeetingStatus.CONFIRMED)
+
+            whenever(meetingRepository.findById(command.meetingId)).thenReturn(found)
+            whenever(meetingRepository.save(any())).thenReturn(found)
+
+            val result = meetingDomainService.cancelConfirm(command)
+
+            assertThat(result.status).isEqualTo(MeetingStatus.OPEN)
+            assertThat(result.confirmedDate).isNull()
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 취소 시 NOT_MEETING_HOST 예외`() {
+            val command = CancelConfirmCommand(meetingId = 1L, userId = 2L)
+
+            whenever(meetingRepository.findById(command.meetingId))
+                .thenReturn(meeting(hostId = 1L, status = MeetingStatus.CONFIRMED))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.cancelConfirm(command) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
+            verify(meetingRepository, never()).save(any())
+        }
+
+        @Test
+        fun `이미 OPEN 상태에서 취소 시 MEETING_NOT_CONFIRMED 예외`() {
+            val command = CancelConfirmCommand(meetingId = 1L, userId = 1L)
+
+            whenever(meetingRepository.findById(command.meetingId)).thenReturn(meeting(hostId = 1L))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.cancelConfirm(command) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_CONFIRMED)
         }
     }
 

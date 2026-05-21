@@ -49,8 +49,19 @@ class MeetingTest {
         }
 
         @Test
-        fun `OPEN 상태가 아닌 약속방 확정 시 MEETING_NOT_OPEN 예외`() {
+        fun `CONFIRMED 상태에서 재확정 시 날짜 업데이트`() {
             val meeting = meeting(hostId = 1L, status = MeetingStatus.CONFIRMED)
+            val newDate = LocalDate.of(2025, 6, 20)
+
+            meeting.confirmDate(userId = 1L, date = newDate)
+
+            assertThat(meeting.status).isEqualTo(MeetingStatus.CONFIRMED)
+            assertThat(meeting.confirmedDate).isEqualTo(newDate)
+        }
+
+        @Test
+        fun `CANCELLED 상태 약속방 확정 시 MEETING_NOT_OPEN 예외`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.CANCELLED)
 
             val ex = assertThrows<MannaException> {
                 meeting.confirmDate(userId = 1L, date = LocalDate.of(2025, 6, 15))
@@ -76,6 +87,36 @@ class MeetingTest {
                 meeting.confirmDate(userId = 1L, date = LocalDate.of(2025, 7, 1))
             }
             assertThat(ex.errorCode).isEqualTo(ErrorCode.DATE_OUT_OF_RANGE)
+        }
+    }
+
+    @Nested
+    inner class CancelConfirm {
+
+        @Test
+        fun `확정 취소 성공 시 status OPEN, confirmedDate null`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.CONFIRMED)
+
+            meeting.cancelConfirm(userId = 1L)
+
+            assertThat(meeting.status).isEqualTo(MeetingStatus.OPEN)
+            assertThat(meeting.confirmedDate).isNull()
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 요청 시 NOT_MEETING_HOST 예외`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.CONFIRMED)
+
+            val ex = assertThrows<MannaException> { meeting.cancelConfirm(userId = 2L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
+        }
+
+        @Test
+        fun `OPEN 상태에서 취소 시 MEETING_NOT_CONFIRMED 예외`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.OPEN)
+
+            val ex = assertThrows<MannaException> { meeting.cancelConfirm(userId = 1L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_CONFIRMED)
         }
     }
 

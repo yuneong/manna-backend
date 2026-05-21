@@ -46,10 +46,17 @@ class Meeting(
 
     fun confirmDate(userId: Long, date: LocalDate) {
         if (hostId != userId) throw MannaException(ErrorCode.NOT_MEETING_HOST)
-        if (status != MeetingStatus.OPEN) throw MannaException(ErrorCode.MEETING_NOT_OPEN)
+        if (status == MeetingStatus.CANCELLED) throw MannaException(ErrorCode.MEETING_NOT_OPEN)
         if (date < dateRangeStart || date > dateRangeEnd) throw MannaException(ErrorCode.DATE_OUT_OF_RANGE)
         confirmedDate = date
         status = MeetingStatus.CONFIRMED
+    }
+
+    fun cancelConfirm(userId: Long) {
+        if (hostId != userId) throw MannaException(ErrorCode.NOT_MEETING_HOST)
+        if (status != MeetingStatus.CONFIRMED) throw MannaException(ErrorCode.MEETING_NOT_CONFIRMED)
+        confirmedDate = null
+        status = MeetingStatus.OPEN
     }
 
     fun isHost(userId: Long) = hostId == userId
