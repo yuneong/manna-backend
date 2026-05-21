@@ -128,9 +128,11 @@ src/main/kotlin/com/manna/
     ▼
 JwtAuthenticationFilter
     ├── Authorization 헤더에서 Bearer 토큰 추출
-    ├── JwtTokenProvider.validateToken()
-    ├── JwtTokenProvider.getUserId() → Long
-    └── SecurityContext에 Authentication 주입
+    ├── 토큰 없음 → 필터 통과 → Spring Security AuthenticationEntryPoint
+    │       └── 401 JSON {"status":401,"message":"로그인이 필요합니다"}
+    ├── 토큰 있음 + 유효하지 않음 (만료, 변조 등)
+    │       └── 401 JSON {"status":401,"message":"유효하지 않은 토큰입니다"} 후 필터 체인 중단
+    └── 토큰 유효 → JwtTokenProvider.getUserId() → SecurityContext에 Authentication 주입
     │
     ▼
 Controller (@AuthenticationPrincipal userId: Long)

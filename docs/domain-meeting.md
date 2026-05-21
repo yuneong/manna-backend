@@ -97,7 +97,7 @@ meeting/
 | `join()` | OPEN 상태 확인, 중복 참여 → `ALREADY_JOINED` |
 | `updateAvailability()` | 기존 가용 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
 | `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 |
-| `getAvailabilityHeatmap()` | `{ "날짜": 참여자수 }` 형태로 집계 |
+| `getAvailabilityHeatmap()` | `{ "날짜": [userId, ...] }` 형태로 집계 (날짜별 가능한 userId 목록) |
 | `getMyAvailability()` | 특정 미팅에서 본인이 선택한 날짜 목록 반환 |
 | `getParticipantCount()` | 약속방 참여자 수 반환 |
 | `isParticipant()` | 특정 사용자의 참여 여부 반환 |
@@ -132,7 +132,11 @@ meeting/
   "confirmedDate": null,
   "status": "OPEN",
   "createdAt": "2025-05-18T12:00:00",
-  "participantCount": 1
+  "participantCount": 1,
+  "responseCount": 0,
+  "participants": [
+    { "id": 1, "nickname": "홍길동" }
+  ]
 }
 ```
 
@@ -148,14 +152,25 @@ meeting/
   "id": 1,
   "hostId": 1,
   "title": "6월 회식",
-  "participantCount": 3,
-  "isParticipant": true,
+  "description": "팀 회식 날짜 잡기",
+  "dateRangeStart": "2025-06-01",
+  "dateRangeEnd": "2025-06-30",
+  "confirmedDate": null,
   "status": "OPEN",
-  ...
+  "createdAt": "2025-05-18T12:00:00",
+  "participantCount": 3,
+  "responseCount": 2,
+  "participants": [
+    { "id": 1, "nickname": "홍길동" },
+    { "id": 2, "nickname": "김철수" },
+    { "id": 3, "nickname": "이영희" }
+  ],
+  "isParticipant": true
 }
 ```
 
-> `isParticipant`는 단건 조회에만 포함됩니다. 목록 조회(`/my`)에는 포함되지 않습니다.
+> - `isParticipant`: 단건 조회에만 포함됩니다. 목록 조회(`/my`)에는 포함되지 않습니다.
+> - `responseCount`: availability를 1개 이상 등록한 참여자 수 (distinct userId 기준).
 
 ---
 
@@ -164,6 +179,8 @@ meeting/
 내 약속방 목록 조회 (인증 필요)
 
 **Response** `200 OK` — `List<MeetingResponse>`
+
+각 항목은 단건 조회와 동일한 구조이며, `isParticipant` 필드는 포함되지 않습니다.
 
 ---
 
@@ -224,14 +241,24 @@ meeting/
 {
   "meetingId": 1,
   "heatmap": {
-    "2025-06-10": 3,
-    "2025-06-11": 2,
-    "2025-06-15": 4
+    "2025-06-10": {
+      "count": 3,
+      "availableParticipantIds": [1, 2, 3]
+    },
+    "2025-06-11": {
+      "count": 2,
+      "availableParticipantIds": [1, 2]
+    },
+    "2025-06-15": {
+      "count": 4,
+      "availableParticipantIds": [1, 2, 3, 4]
+    }
   }
 }
 ```
 
-값은 해당 날짜에 가능하다고 표시한 참여자 수입니다.
+- `count`: 해당 날짜에 가능하다고 표시한 참여자 수
+- `availableParticipantIds`: 해당 날짜에 가능한 참여자 ID 배열 (날짜 확정 화면에서 참여 가능/불가 참여자 구분 표시에 사용)
 
 ---
 
@@ -246,7 +273,7 @@ meeting/
 }
 ```
 
-**Response** `200 OK` — MeetingResponse (`status: "CONFIRMED"`, `confirmedDate` 포함)
+**Response** `200 OK` — MeetingResponse (`status: "CONFIRMED"`, `confirmedDate` 포함, `participants`·`participantCount`·`responseCount` 포함)
 
 **오류**
 - `NOT_MEETING_HOST` — 방장이 아닌 사용자가 요청

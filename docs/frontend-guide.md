@@ -58,7 +58,7 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "status": 401,
-  "message": "비밀번호가 일치하지 않습니다"
+  "message": "유효하지 않은 토큰입니다"
 }
 ```
 
@@ -69,6 +69,29 @@ Authorization: Bearer {accessToken}
 | `403` | 권한 없음 (방장 전용 기능을 일반 참여자가 시도) |
 | `404` | 리소스 없음 |
 | `409` | 중복 (이메일 중복, 이미 참여한 약속방) |
+
+### 401 케이스별 메시지
+
+| 메시지 | 상황 |
+|---|---|
+| `"로그인이 필요합니다"` | Authorization 헤더 자체가 없는 경우 |
+| `"유효하지 않은 토큰입니다"` | 토큰이 만료되었거나 변조된 경우 |
+| `"비밀번호가 일치하지 않습니다"` | 로그인 시 비밀번호 불일치 |
+
+**401 응답 처리 권장 방법**: axios interceptor 등으로 401을 감지해 저장된 토큰을 삭제하고 로그인 화면으로 redirect합니다.
+
+```typescript
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
 
 ---
 
@@ -202,7 +225,11 @@ POST /api/v1/meetings
   "confirmedDate": null,
   "status": "OPEN",
   "createdAt": "2026-05-19T12:00:00",
-  "participantCount": 1
+  "participantCount": 1,
+  "responseCount": 0,
+  "participants": [
+    { "id": 1, "nickname": "홍길동" }
+  ]
 }
 ```
 
@@ -229,11 +256,19 @@ GET /api/v1/meetings/{meetingId}
   "status": "OPEN",
   "createdAt": "2026-05-19T12:00:00",
   "participantCount": 3,
+  "responseCount": 2,
+  "participants": [
+    { "id": 1, "nickname": "홍길동" },
+    { "id": 2, "nickname": "김철수" },
+    { "id": 3, "nickname": "이영희" }
+  ],
   "isParticipant": true
 }
 ```
 
-> `isParticipant`: 요청한 사용자의 참여 여부. 페이지 진입 시 이 값으로 참여 여부를 판별하세요. `false`일 때만 join API를 호출하면 됩니다.
+> - `isParticipant`: 요청한 사용자의 참여 여부. 페이지 진입 시 이 값으로 참여 여부를 판별하세요. `false`일 때만 join API를 호출하면 됩니다.
+> - `responseCount`: availability를 1개 이상 등록한 참여자 수. `participantCount`와 함께 사용해 응답률을 표시할 수 있습니다.
+> - `participants`: 참여자 id·nickname 배열. 아바타 목록 표시에 사용하세요.
 
 ---
 
@@ -250,11 +285,24 @@ GET /api/v1/meetings/my
     "id": 1,
     "hostId": 1,
     "title": "6월 회식",
+    "description": "팀 회식 날짜 잡기",
+    "dateRangeStart": "2026-06-01",
+    "dateRangeEnd": "2026-06-30",
+    "confirmedDate": null,
     "status": "OPEN",
-    ...
+    "createdAt": "2026-05-19T12:00:00",
+    "participantCount": 3,
+    "responseCount": 2,
+    "participants": [
+      { "id": 1, "nickname": "홍길동" },
+      { "id": 2, "nickname": "김철수" },
+      { "id": 3, "nickname": "이영희" }
+    ]
   }
 ]
 ```
+
+> `isParticipant` 필드는 목록 응답에 포함되지 않습니다.
 
 ---
 
@@ -321,21 +369,31 @@ PUT /api/v1/meetings/{meetingId}/availability
 GET /api/v1/meetings/{meetingId}/heatmap
 ```
 
-날짜별로 가능하다고 응답한 참여자 수를 반환합니다. 캘린더 UI에서 날짜 색상 강도를 표현할 때 사용합니다.
+날짜별로 가능하다고 응답한 참여자 수와 참여자 ID 목록을 반환합니다. 캘린더 UI 색상 강도 표현 및 날짜 확정 화면에서 참여 가능/불가 참여자 아바타 구분에 사용합니다.
 
 **Response** `200`
 ```json
 {
   "meetingId": 1,
   "heatmap": {
-    "2026-06-10": 3,
-    "2026-06-11": 2,
-    "2026-06-15": 4
+    "2026-06-10": {
+      "count": 3,
+      "availableParticipantIds": [1, 2, 3]
+    },
+    "2026-06-11": {
+      "count": 2,
+      "availableParticipantIds": [1, 2]
+    },
+    "2026-06-15": {
+      "count": 4,
+      "availableParticipantIds": [1, 2, 3, 4]
+    }
   }
 }
 ```
 
-> 응답에 포함되지 않은 날짜는 가능한 인원이 0명입니다.
+> - 응답에 포함되지 않은 날짜는 가능한 인원이 0명입니다.
+> - `availableParticipantIds`와 `/meetings/{id}` 응답의 `participants` 배열을 조합하면, 선택한 날짜의 참여 가능/불가 참여자를 각각 구분할 수 있습니다.
 
 ---
 
