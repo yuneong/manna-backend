@@ -1,5 +1,7 @@
 package com.manna.meeting.application.facade
 
+import com.manna.common.exception.ErrorCode
+import com.manna.common.exception.MannaException
 import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
@@ -9,12 +11,14 @@ import com.manna.meeting.application.info.MeetingInfo
 import com.manna.meeting.application.info.ParticipantInfo
 import com.manna.meeting.application.info.ScheduleHeatmapInfo
 import com.manna.meeting.domain.service.MeetingDomainService
+import com.manna.meeting.domain.service.RevoteDomainService
 import com.manna.user.domain.service.UserDomainService
 import org.springframework.stereotype.Component
 
 @Component
 class MeetingFacade(
     private val meetingDomainService: MeetingDomainService,
+    private val revoteDomainService: RevoteDomainService,
     private val userDomainService: UserDomainService,
 ) {
 
@@ -48,6 +52,9 @@ class MeetingFacade(
     }
 
     fun confirmDate(command: ConfirmDateCommand): MeetingInfo {
+        if (revoteDomainService.hasOpenRevote(command.meetingId)) {
+            throw MannaException(ErrorCode.REVOTE_IN_PROGRESS)
+        }
         val meeting = meetingDomainService.confirmDate(command)
         val meetingIds = listOf(meeting.id)
         val participants = resolveParticipants(meetingIds)
