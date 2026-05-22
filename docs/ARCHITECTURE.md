@@ -90,31 +90,55 @@ src/main/kotlin/com/manna/
     │   │   ├── Meeting.kt
     │   │   ├── MeetingParticipant.kt
     │   │   ├── MeetingSchedule.kt
-    │   │   └── MeetingStatus.kt
-    │   ├── repository/MeetingRepository.kt    ← interface (domain boundary)
-    │   └── service/MeetingDomainService.kt
+    │   │   ├── MeetingStatus.kt
+    │   │   ├── Revote.kt
+    │   │   ├── RevoteCandidate.kt
+    │   │   ├── RevoteVote.kt
+    │   │   └── RevoteStatus.kt
+    │   ├── repository/
+    │   │   ├── MeetingRepository.kt           ← interface (domain boundary)
+    │   │   └── RevoteRepository.kt
+    │   └── service/
+    │       ├── MeetingDomainService.kt
+    │       └── RevoteDomainService.kt
     ├── application/
     │   ├── command/
     │   │   ├── CreateMeetingCommand.kt
     │   │   ├── JoinMeetingCommand.kt
     │   │   ├── UpdateScheduleCommand.kt
-    │   │   └── ConfirmDateCommand.kt
+    │   │   ├── ConfirmDateCommand.kt
+    │   │   ├── CreateRevoteCommand.kt
+    │   │   ├── VoteRevoteCommand.kt
+    │   │   └── ConfirmRevoteCommand.kt
     │   ├── info/
     │   │   ├── MeetingInfo.kt
-    │   │   └── ScheduleHeatmapInfo.kt
-    │   └── facade/MeetingFacade.kt
+    │   │   ├── ScheduleHeatmapInfo.kt
+    │   │   └── RevoteInfo.kt
+    │   └── facade/
+    │       ├── MeetingFacade.kt
+    │       └── RevoteFacade.kt
     ├── infrastructure/
-    │   ├── jpa/MeetingJpaRepository.kt
-    │   └── repository/MeetingRepositoryImpl.kt
+    │   ├── jpa/
+    │   │   ├── MeetingJpaRepository.kt
+    │   │   └── RevoteJpaRepository.kt
+    │   └── repository/
+    │       ├── MeetingRepositoryImpl.kt
+    │       └── RevoteRepositoryImpl.kt
     └── interfaces/
-        ├── controller/MeetingController.kt
+        ├── controller/
+        │   ├── MeetingController.kt
+        │   └── RevoteController.kt
         └── dto/
             ├── CreateMeetingRequest.kt
             ├── UpdateScheduleRequest.kt
             ├── ConfirmDateRequest.kt
             ├── MeetingResponse.kt
             ├── MyScheduleResponse.kt
-            └── HeatmapResponse.kt
+            ├── HeatmapResponse.kt
+            ├── CreateRevoteRequest.kt
+            ├── VoteRevoteRequest.kt
+            ├── ConfirmRevoteRequest.kt
+            └── RevoteResponse.kt
 ```
 
 ---
@@ -164,9 +188,16 @@ validateToken(token: String): Boolean // 유효성 검사
 | `INVALID_TOKEN` | 401 | 유효하지 않은 토큰입니다 |
 | `MEETING_NOT_FOUND` | 404 | 약속방을 찾을 수 없습니다 |
 | `NOT_MEETING_HOST` | 403 | 약속방 방장만 가능한 작업입니다 |
+| `NOT_MEETING_PARTICIPANT` | 403 | 약속방 참여자만 가능한 작업입니다 |
 | `ALREADY_JOINED` | 409 | 이미 참여한 약속방입니다 |
 | `MEETING_NOT_OPEN` | 400 | 진행 중인 약속방이 아닙니다 |
 | `DATE_OUT_OF_RANGE` | 400 | 약속방 날짜 범위를 벗어난 날짜입니다 |
+| `REVOTE_NOT_FOUND` | 404 | 진행 중인 재투표가 없습니다 |
+| `REVOTE_ALREADY_EXISTS` | 400 | 이미 진행 중인 재투표가 있습니다 |
+| `REVOTE_ALREADY_VOTED` | 409 | 이미 투표하였습니다 |
+| `REVOTE_INVALID_CANDIDATE_DATE` | 400 | 유효하지 않은 후보 날짜입니다 |
+| `REVOTE_NOT_COMPLETED` | 400 | 아직 전원 투표가 완료되지 않았습니다 |
+| `REVOTE_IN_PROGRESS` | 400 | 재투표가 진행 중입니다 |
 
 ---
 

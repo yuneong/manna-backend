@@ -467,6 +467,157 @@ PUT /api/v1/meetings/{meetingId}/schedules
 
 ---
 
+---
+
+## Revote API (재투표)
+
+> 🔒 모든 재투표 API는 `Authorization` 헤더 필요
+
+날짜 조율 결과 동률이 발생하거나 재논의가 필요할 때 방장이 재투표를 개설합니다.
+
+---
+
+### 재투표 생성 🔒 (방장 전용)
+
+```
+POST /api/v1/meetings/{meetingId}/revote
+```
+
+**Request**
+```json
+{
+  "candidateDates": ["2026-06-05", "2026-06-06"]
+}
+```
+
+| 필드 | 조건 |
+|---|---|
+| `candidateDates` | 2개 이상, 히트맵에 실제 존재하는 날짜만 허용 |
+
+**Response** `201`
+```json
+{
+  "status": "OPEN",
+  "candidates": [
+    { "date": "2026-06-05", "count": 0, "voters": [] },
+    { "date": "2026-06-06", "count": 0, "voters": [] }
+  ],
+  "votedCount": 0,
+  "totalCount": 6,
+  "myVotedDate": null
+}
+```
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 방장이 아닌 사용자 |
+| `400` (`REVOTE_ALREADY_EXISTS`) | 이미 진행 중인 재투표 있음 |
+| `400` (`REVOTE_INVALID_CANDIDATE_DATE`) | 후보 2개 미만, 또는 히트맵에 없는 날짜 포함 |
+
+---
+
+### 재투표 참여 🔒
+
+```
+POST /api/v1/meetings/{meetingId}/revote/vote
+```
+
+**Request**
+```json
+{
+  "votedDate": "2026-06-05"
+}
+```
+
+**Response** `200`
+
+> 전원 투표 완료 시 백엔드에서 자동 처리합니다.
+> - **단독 1위**: `meeting.status = CONFIRMED`, `meeting.confirmedDate` 업데이트
+> - **동률**: 상태 유지 → 방장 confirm 대기 (`revote.status`는 여전히 `OPEN`)
+>
+> 투표 완료 후 meeting 상태가 바뀌었을 수 있으므로, `GET /api/v1/meetings/{meetingId}`를 재조회하는 것을 권장합니다.
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 약속방 참여자가 아닌 사용자 |
+| `404` | 진행 중인 재투표 없음 |
+| `400` | 후보에 없는 날짜 선택 |
+| `409` (`REVOTE_ALREADY_VOTED`) | 중복 투표 |
+
+---
+
+### 재투표 현황 조회 🔒
+
+```
+GET /api/v1/meetings/{meetingId}/revote
+```
+
+**Response** `200`
+```json
+{
+  "status": "OPEN",
+  "candidates": [
+    {
+      "date": "2026-06-05",
+      "count": 4,
+      "voters": ["민지", "현우", "도현", "예린"]
+    },
+    {
+      "date": "2026-06-06",
+      "count": 2,
+      "voters": ["수진", "태양"]
+    }
+  ],
+  "votedCount": 6,
+  "totalCount": 6,
+  "myVotedDate": "2026-06-05"
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| `status` | `OPEN` (진행 중) / `CLOSED` (종료) |
+| `candidates[].voters` | 해당 날짜에 투표한 참여자 닉네임 배열 |
+| `votedCount` | 투표를 완료한 참여자 수 |
+| `totalCount` | 약속방 전체 참여자 수 |
+| `myVotedDate` | 요청한 사용자가 선택한 날짜 (`null`이면 미투표) |
+
+> 가장 최근 revote를 반환합니다 (OPEN·CLOSED 무관).
+
+| 에러 코드 | 상황 |
+|---|---|
+| `404` | 이 약속방에 재투표 이력 없음 |
+
+---
+
+### 재동률 방장 확정 🔒 (방장 전용)
+
+```
+POST /api/v1/meetings/{meetingId}/revote/confirm
+```
+
+전원 투표 완료 후 동률이 발생한 경우, 방장이 최종 날짜를 직접 선택합니다.
+
+**Request**
+```json
+{
+  "confirmedDate": "2026-06-05"
+}
+```
+
+**Response** `200`
+
+처리 결과: `revote.status = CLOSED`, `meeting.confirmedDate` 업데이트, `meeting.status = CONFIRMED`
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 방장이 아닌 사용자 |
+| `404` | 진행 중인 재투표 없음 |
+| `400` (`REVOTE_NOT_COMPLETED`) | 아직 전원 투표 미완료 |
+| `400` (`REVOTE_INVALID_CANDIDATE_DATE`) | 후보 날짜가 아닌 날짜 선택 |
+
+---
+
 ## 약속방 status 값
 
 | 값 | 의미 |
