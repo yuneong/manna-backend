@@ -23,6 +23,7 @@ data class MeetingInfo(
     val participants: List<ParticipantInfo>,
     val responseCount: Int = 0,
     val isParticipant: Boolean? = null,
+    val hasRevote: Boolean = false,
 ) {
     val participantCount: Int get() = participants.size
 
@@ -32,6 +33,7 @@ data class MeetingInfo(
             participants: List<ParticipantInfo>,
             responseCount: Int = 0,
             isParticipant: Boolean? = null,
+            hasRevote: Boolean = false,
         ) = MeetingInfo(
             id = meeting.id,
             hostId = meeting.hostId,
@@ -45,6 +47,7 @@ data class MeetingInfo(
             participants = participants,
             responseCount = responseCount,
             isParticipant = isParticipant,
+            hasRevote = hasRevote,
         )
     }
 }

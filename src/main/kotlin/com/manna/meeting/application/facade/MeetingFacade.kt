@@ -68,7 +68,8 @@ class MeetingFacade(
         val participants = participantsByMeeting[meetingId] ?: emptyList()
         val isParticipant = participants.any { it.id == userId }
         val responseCount = resolveResponseCounts(listOf(meetingId))[meetingId] ?: 0
-        return MeetingInfo.from(meeting, participants, responseCount, isParticipant)
+        val hasRevote = revoteDomainService.hasOpenRevote(meetingId)
+        return MeetingInfo.from(meeting, participants, responseCount, isParticipant, hasRevote)
     }
 
     fun getMyMeetings(userId: Long): List<MeetingInfo> {

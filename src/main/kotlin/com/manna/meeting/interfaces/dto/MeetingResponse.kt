@@ -26,6 +26,7 @@ data class MeetingResponse(
     val participants: List<ParticipantDto>,
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val isParticipant: Boolean? = null,
+    val hasRevote: Boolean = false,
 ) {
     companion object {
         fun from(info: MeetingInfo) = MeetingResponse(
@@ -42,6 +43,7 @@ data class MeetingResponse(
             responseCount = info.responseCount,
             participants = info.participants.map { ParticipantDto(it.id, it.nickname) },
             isParticipant = info.isParticipant,
+            hasRevote = info.hasRevote,
         )
     }
 }
