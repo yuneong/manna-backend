@@ -24,15 +24,15 @@ class Meeting(
     val hostId: Long,
 
     @Column(nullable = false)
-    val title: String,
+    var title: String,
 
-    val description: String? = null,
-
-    @Column(nullable = false)
-    val dateRangeStart: LocalDate,
+    var description: String? = null,
 
     @Column(nullable = false)
-    val dateRangeEnd: LocalDate,
+    var dateRangeStart: LocalDate,
+
+    @Column(nullable = false)
+    var dateRangeEnd: LocalDate,
 
     var confirmedDate: LocalDate? = null,
 
@@ -57,6 +57,20 @@ class Meeting(
         if (status != MeetingStatus.CONFIRMED) throw MannaException(ErrorCode.MEETING_NOT_CONFIRMED)
         confirmedDate = null
         status = MeetingStatus.OPEN
+    }
+
+    fun update(userId: Long, title: String, description: String?, dateRangeStart: LocalDate, dateRangeEnd: LocalDate): Boolean {
+        if (hostId != userId) throw MannaException(ErrorCode.NOT_MEETING_HOST)
+        val dateRangeChanged = this.dateRangeStart != dateRangeStart || this.dateRangeEnd != dateRangeEnd
+        this.title = title
+        this.description = description
+        if (dateRangeChanged) {
+            this.dateRangeStart = dateRangeStart
+            this.dateRangeEnd = dateRangeEnd
+            confirmedDate = null
+            status = MeetingStatus.OPEN
+        }
+        return dateRangeChanged
     }
 
     fun isHost(userId: Long) = hostId == userId

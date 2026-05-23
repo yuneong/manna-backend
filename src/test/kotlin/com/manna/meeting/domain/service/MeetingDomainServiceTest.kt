@@ -6,6 +6,7 @@ import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
+import com.manna.meeting.application.command.UpdateMeetingCommand
 import com.manna.meeting.application.command.UpdateScheduleCommand
 import com.manna.meeting.domain.entity.MeetingSchedule
 import com.manna.meeting.domain.entity.Meeting
@@ -360,6 +361,95 @@ class MeetingDomainServiceTest {
             val result = meetingDomainService.getMySchedules(1L, 2L)
 
             assertThat(result).isEmpty()
+        }
+    }
+
+    @Nested
+    inner class UpdateMeeting {
+
+        @Test
+        fun `날짜 범위 변경 없으면 스케줄 삭제 없이 저장`() {
+            val command = UpdateMeetingCommand(
+                meetingId = 1L, userId = 1L, title = "수정 제목", description = null,
+                dateRangeStart = start, dateRangeEnd = end,
+            )
+            val found = meeting(hostId = 1L)
+
+            whenever(meetingRepository.findById(1L)).thenReturn(found)
+            whenever(meetingRepository.save(any())).thenReturn(found)
+
+            meetingDomainService.update(command)
+
+            verify(meetingRepository, never()).deleteSchedulesByMeetingId(any())
+            verify(meetingRepository).save(any())
+        }
+
+        @Test
+        fun `날짜 범위 변경 시 스케줄 전체 삭제 후 저장`() {
+            val command = UpdateMeetingCommand(
+                meetingId = 1L, userId = 1L, title = "수정 제목", description = null,
+                dateRangeStart = LocalDate.of(2025, 7, 1),
+                dateRangeEnd = LocalDate.of(2025, 7, 31),
+            )
+            val found = meeting(hostId = 1L, status = MeetingStatus.CONFIRMED)
+            found.confirmedDate = LocalDate.of(2025, 6, 15)
+
+            whenever(meetingRepository.findById(1L)).thenReturn(found)
+            whenever(meetingRepository.save(any())).thenReturn(found)
+
+            val result = meetingDomainService.update(command)
+
+            verify(meetingRepository).deleteSchedulesByMeetingId(1L)
+            assertThat(result.confirmedDate).isNull()
+            assertThat(result.status).isEqualTo(MeetingStatus.OPEN)
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 수정 시 NOT_MEETING_HOST 예외`() {
+            val command = UpdateMeetingCommand(
+                meetingId = 1L, userId = 99L, title = "수정 제목", description = null,
+                dateRangeStart = start, dateRangeEnd = end,
+            )
+
+            whenever(meetingRepository.findById(1L)).thenReturn(meeting(hostId = 1L))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.update(command) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
+            verify(meetingRepository, never()).save(any())
+        }
+    }
+
+    @Nested
+    inner class DeleteMeeting {
+
+        @Test
+        fun `방장 삭제 성공 — 스케줄·참여자·미팅 순서로 삭제`() {
+            whenever(meetingRepository.findById(1L)).thenReturn(meeting(hostId = 1L))
+
+            meetingDomainService.delete(1L, 1L)
+
+            val inOrder = org.mockito.Mockito.inOrder(meetingRepository)
+            inOrder.verify(meetingRepository).findById(1L)
+            inOrder.verify(meetingRepository).deleteSchedulesByMeetingId(1L)
+            inOrder.verify(meetingRepository).deleteParticipantsByMeetingId(1L)
+            inOrder.verify(meetingRepository).delete(any())
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 삭제 시 NOT_MEETING_HOST 예외`() {
+            whenever(meetingRepository.findById(1L)).thenReturn(meeting(hostId = 1L))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.delete(1L, 99L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
+            verify(meetingRepository, never()).deleteSchedulesByMeetingId(any())
+        }
+
+        @Test
+        fun `존재하지 않는 약속방 삭제 시 MEETING_NOT_FOUND 예외`() {
+            whenever(meetingRepository.findById(999L)).thenReturn(null)
+
+            val ex = assertThrows<MannaException> { meetingDomainService.delete(999L, 1L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_FOUND)
         }
     }
 

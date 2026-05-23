@@ -1,18 +1,22 @@
 package com.manna.meeting.application.facade
 
 import com.manna.meeting.application.command.CreateMeetingCommand
+import com.manna.meeting.application.command.UpdateMeetingCommand
 import com.manna.meeting.domain.entity.Meeting
 import com.manna.meeting.domain.entity.MeetingParticipant
 import com.manna.meeting.domain.entity.MeetingSchedule
 import com.manna.meeting.domain.entity.MeetingStatus
 import com.manna.meeting.domain.service.MeetingDomainService
+import com.manna.meeting.domain.service.RevoteDomainService
 import com.manna.user.domain.entity.User
 import com.manna.user.domain.service.UserDomainService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -20,6 +24,7 @@ import java.time.LocalDateTime
 class MeetingFacadeTest {
 
     private val meetingDomainService: MeetingDomainService = mock()
+    private val revoteDomainService: RevoteDomainService = mock()
     private val userDomainService: UserDomainService = mock()
     private lateinit var meetingFacade: MeetingFacade
 
@@ -28,7 +33,7 @@ class MeetingFacadeTest {
 
     @BeforeEach
     fun setUp() {
-        meetingFacade = MeetingFacade(meetingDomainService, userDomainService)
+        meetingFacade = MeetingFacade(meetingDomainService, revoteDomainService, userDomainService)
     }
 
     private fun meeting(id: Long = 1L, hostId: Long = 1L) = Meeting(
@@ -70,6 +75,7 @@ class MeetingFacadeTest {
             whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L))).thenReturn(schedules)
             whenever(userDomainService.getUsersByIds(listOf(1L, 2L, 3L)))
                 .thenReturn(listOf(user(1L), user(2L), user(3L)))
+            whenever(revoteDomainService.hasOpenRevote(1L)).thenReturn(false)
 
             val result = meetingFacade.getMeeting(meetingId = 1L, userId = 1L)
 
@@ -87,6 +93,7 @@ class MeetingFacadeTest {
             whenever(meetingDomainService.getParticipantsByMeetingIds(listOf(1L))).thenReturn(participants)
             whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L))).thenReturn(emptyList())
             whenever(userDomainService.getUsersByIds(listOf(1L))).thenReturn(listOf(user(1L)))
+            whenever(revoteDomainService.hasOpenRevote(1L)).thenReturn(false)
 
             val result = meetingFacade.getMeeting(meetingId = 1L, userId = 1L)
 
@@ -179,6 +186,61 @@ class MeetingFacadeTest {
             val result = meetingFacade.getHeatmap(1L)
 
             assertThat(result.heatmap).isEmpty()
+        }
+    }
+
+    @Nested
+    inner class UpdateMeeting {
+
+        private fun command(
+            dateRangeStart: LocalDate = start,
+            dateRangeEnd: LocalDate = end,
+        ) = UpdateMeetingCommand(
+            meetingId = 1L,
+            userId = 1L,
+            title = "수정된 제목",
+            description = null,
+            dateRangeStart = dateRangeStart,
+            dateRangeEnd = dateRangeEnd,
+        )
+
+        @Test
+        fun `재투표 진행 중이면 REVOTE_IN_PROGRESS 예외`() {
+            whenever(revoteDomainService.hasOpenRevote(1L)).thenReturn(true)
+
+            val ex = assertThrows<com.manna.common.exception.MannaException> {
+                meetingFacade.updateMeeting(command())
+            }
+            assertThat(ex.errorCode).isEqualTo(com.manna.common.exception.ErrorCode.REVOTE_IN_PROGRESS)
+        }
+
+        @Test
+        fun `재투표 없으면 수정 성공 후 MeetingInfo 반환`() {
+            val updated = meeting(id = 1L)
+            val participant = MeetingParticipant(meeting = updated, userId = 1L)
+
+            whenever(revoteDomainService.hasOpenRevote(1L)).thenReturn(false)
+            whenever(meetingDomainService.update(command())).thenReturn(updated)
+            whenever(meetingDomainService.getParticipantsByMeetingIds(listOf(1L))).thenReturn(listOf(participant))
+            whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L))).thenReturn(emptyList())
+            whenever(userDomainService.getUsersByIds(listOf(1L))).thenReturn(listOf(user(1L)))
+
+            val result = meetingFacade.updateMeeting(command())
+
+            assertThat(result.id).isEqualTo(1L)
+        }
+    }
+
+    @Nested
+    inner class DeleteMeeting {
+
+        @Test
+        fun `삭제 시 revote 삭제 후 meeting 삭제 순으로 호출`() {
+            meetingFacade.deleteMeeting(meetingId = 1L, userId = 1L)
+
+            val inOrder = org.mockito.Mockito.inOrder(revoteDomainService, meetingDomainService)
+            inOrder.verify(revoteDomainService).deleteAllByMeetingId(1L)
+            inOrder.verify(meetingDomainService).delete(1L, 1L)
         }
     }
 }

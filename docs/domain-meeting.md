@@ -72,6 +72,7 @@ meeting/
 ├── application/
 │   ├── command/
 │   │   ├── CreateMeetingCommand.kt
+│   │   ├── UpdateMeetingCommand.kt
 │   │   ├── JoinMeetingCommand.kt
 │   │   ├── UpdateScheduleCommand.kt
 │   │   ├── ConfirmDateCommand.kt
@@ -98,6 +99,7 @@ meeting/
     │   └── RevoteController.kt
     └── dto/
         ├── CreateMeetingRequest.kt
+        ├── UpdateMeetingRequest.kt
         ├── UpdateScheduleRequest.kt
         ├── ConfirmDateRequest.kt
         ├── MeetingResponse.kt
@@ -136,6 +138,7 @@ meeting/
 |---|---|
 | `confirmDate(userId, date)` | 방장 여부 → `NOT_MEETING_HOST` / CANCELLED 상태 → `MEETING_NOT_OPEN` / 날짜 범위 → `DATE_OUT_OF_RANGE` (OPEN·CONFIRMED 모두 가능) |
 | `cancelConfirm(userId)` | 방장 여부 → `NOT_MEETING_HOST` / CONFIRMED 아니면 → `MEETING_NOT_CONFIRMED` / confirmedDate=null, status=OPEN |
+| `update(userId, title, description, dateRangeStart, dateRangeEnd)` | 방장 여부 → `NOT_MEETING_HOST` / 날짜 범위 변경 시 confirmedDate=null, status=OPEN 초기화 / 반환값(Boolean): 날짜 범위 변경 여부 |
 | `requireOpen()` | OPEN이 아니면 `MEETING_NOT_OPEN` |
 | `isHost(userId)` | `hostId == userId` |
 
@@ -144,6 +147,8 @@ meeting/
 | 메서드 | 규칙 |
 |---|---|
 | `create()` | 약속방 생성 후 방장을 참여자로 자동 등록 |
+| `update()` | Meeting 엔티티의 `update()` 위임 / 날짜 범위 변경 시 `deleteSchedulesByMeetingId()` 호출 |
+| `delete(meetingId, userId)` | 방장 확인 / 스케줄 → 참여자 → 미팅 순서로 Hard Delete |
 | `join()` | OPEN 상태 확인, 중복 참여 → `ALREADY_JOINED` |
 | `updateSchedule()` | CONFIRMED 상태 → `MEETING_ALREADY_CONFIRMED` / 기존 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
 | `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 (OPEN·CONFIRMED 모두 허용) |
@@ -152,6 +157,12 @@ meeting/
 | `getMySchedules()` | 특정 미팅에서 본인이 선택한 약속 날짜 목록 반환 |
 | `getParticipantCount()` | 약속방 참여자 수 반환 |
 | `isParticipant()` | 특정 사용자의 참여 여부 반환 |
+
+### RevoteDomainService — 추가 메서드
+
+| 메서드 | 규칙 |
+|---|---|
+| `deleteAllByMeetingId(meetingId)` | 해당 미팅의 모든 revote에 대해 votes → candidates → revotes 순서로 Hard Delete |
 
 ### RevoteDomainService
 
@@ -256,6 +267,49 @@ meeting/
 **Response** `200 OK` — `List<MeetingResponse>`
 
 각 항목은 단건 조회와 동일한 구조이며, `isParticipant` 필드는 포함되지 않습니다.
+
+---
+
+### PUT /api/v1/meetings/{meetingId}
+
+약속방 수정 (방장 전용)
+
+**Request**
+```json
+{
+  "title": "6월 동아리 회식",
+  "description": "설명 (optional)",
+  "dateRangeStart": "2026-06-01",
+  "dateRangeEnd": "2026-06-14"
+}
+```
+
+**Response** `200 OK` — MeetingResponse
+
+**처리 로직**
+- 날짜 범위 변경 없음 → 제목/설명만 업데이트
+- 날짜 범위 변경 있음 → `meeting_schedules` 전체 Hard Delete + `confirmedDate = null` + `status = OPEN` + 전체 필드 업데이트
+
+**오류**
+- `NOT_MEETING_HOST` — 방장이 아닌 사용자
+- `REVOTE_IN_PROGRESS` — OPEN 재투표 진행 중 (400)
+
+---
+
+### DELETE /api/v1/meetings/{meetingId}
+
+약속방 삭제 (방장 전용)
+
+**Response** `204 No Content`
+
+**삭제 순서** (Hard Delete)
+1. `revote_votes` → `revote_candidates` → `revotes`
+2. `meeting_schedules`
+3. `meeting_participants`
+4. `meetings`
+
+**오류**
+- `NOT_MEETING_HOST` — 방장이 아닌 사용자
 
 ---
 

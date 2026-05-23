@@ -20,6 +20,9 @@ class MeetingRepositoryImpl(
     override fun save(meeting: Meeting): Meeting =
         meetingJpaRepository.save(meeting)
 
+    override fun delete(meeting: Meeting) =
+        meetingJpaRepository.delete(meeting)
+
     override fun findById(id: Long): Meeting? =
         meetingJpaRepository.findById(id).orElse(null)
 
@@ -38,12 +41,20 @@ class MeetingRepositoryImpl(
     override fun findParticipantsByMeetingIds(meetingIds: List<Long>): List<MeetingParticipant> =
         participantJpaRepository.findByMeetingIdIn(meetingIds)
 
+    @Transactional
+    override fun deleteParticipantsByMeetingId(meetingId: Long) =
+        participantJpaRepository.deleteByMeetingId(meetingId)
+
     override fun saveSchedule(schedule: MeetingSchedule): MeetingSchedule =
         scheduleJpaRepository.save(schedule)
 
     @Transactional
     override fun deleteSchedulesByMeetingIdAndUserId(meetingId: Long, userId: Long) =
         scheduleJpaRepository.deleteByMeetingIdAndUserId(meetingId, userId)
+
+    @Transactional
+    override fun deleteSchedulesByMeetingId(meetingId: Long) =
+        scheduleJpaRepository.deleteByMeetingId(meetingId)
 
     override fun findSchedulesByMeetingId(meetingId: Long): List<MeetingSchedule> =
         scheduleJpaRepository.findByMeetingId(meetingId)

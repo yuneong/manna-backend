@@ -138,4 +138,14 @@ class RevoteDomainService(
 
     fun hasOpenRevote(meetingId: Long): Boolean =
         revoteRepository.findOpenByMeetingId(meetingId) != null
+
+    @Transactional
+    fun deleteAllByMeetingId(meetingId: Long) {
+        val revotes = revoteRepository.findAllByMeetingId(meetingId)
+        revotes.forEach { revote ->
+            revoteRepository.deleteVotesByRevoteId(revote.id)
+            revoteRepository.deleteCandidatesByRevoteId(revote.id)
+        }
+        revoteRepository.deleteRevotesByMeetingId(meetingId)
+    }
 }

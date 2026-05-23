@@ -10,15 +10,19 @@ import java.time.LocalDate
 interface RevoteJpaRepository : JpaRepository<Revote, Long> {
     fun findByMeetingIdAndStatus(meetingId: Long, status: RevoteStatus): Revote?
     fun findTopByMeetingIdOrderByCreatedAtDesc(meetingId: Long): Revote?
+    fun findAllByMeetingId(meetingId: Long): List<Revote>
+    fun deleteByMeetingId(meetingId: Long)
 }
 
 interface RevoteCandidateJpaRepository : JpaRepository<RevoteCandidate, Long> {
     fun findByRevoteId(revoteId: Long): List<RevoteCandidate>
     fun existsByRevoteIdAndCandidateDate(revoteId: Long, candidateDate: LocalDate): Boolean
+    fun deleteByRevoteId(revoteId: Long)
 }
 
 interface RevoteVoteJpaRepository : JpaRepository<RevoteVote, Long> {
     fun findByRevoteId(revoteId: Long): List<RevoteVote>
     fun findByRevoteIdAndUserId(revoteId: Long, userId: Long): RevoteVote?
     fun countByRevoteId(revoteId: Long): Int
+    fun deleteByRevoteId(revoteId: Long)
 }

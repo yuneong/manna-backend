@@ -15,10 +15,12 @@ interface MeetingParticipantJpaRepository : JpaRepository<MeetingParticipant, Lo
     fun findByMeetingIdAndUserId(meetingId: Long, userId: Long): MeetingParticipant?
     fun findByMeetingId(meetingId: Long): List<MeetingParticipant>
     fun findByMeetingIdIn(meetingIds: List<Long>): List<MeetingParticipant>
+    fun deleteByMeetingId(meetingId: Long)
 }
 
 interface MeetingScheduleJpaRepository : JpaRepository<MeetingSchedule, Long> {
     fun deleteByMeetingIdAndUserId(meetingId: Long, userId: Long)
+    fun deleteByMeetingId(meetingId: Long)
     fun findByMeetingId(meetingId: Long): List<MeetingSchedule>
     fun findByMeetingIdIn(meetingIds: List<Long>): List<MeetingSchedule>
     fun findByMeetingIdAndUserId(meetingId: Long, userId: Long): List<MeetingSchedule>

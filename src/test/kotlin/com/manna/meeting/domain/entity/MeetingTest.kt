@@ -164,4 +164,48 @@ class MeetingTest {
             assertThat(meeting.isHost(2L)).isFalse()
         }
     }
+
+    @Nested
+    inner class Update {
+
+        @Test
+        fun `날짜 범위 변경 없으면 제목·설명만 업데이트, false 반환`() {
+            val meeting = meeting(hostId = 1L)
+
+            val changed = meeting.update(1L, "새 제목", "새 설명", start, end)
+
+            assertThat(changed).isFalse()
+            assertThat(meeting.title).isEqualTo("새 제목")
+            assertThat(meeting.description).isEqualTo("새 설명")
+            assertThat(meeting.status).isEqualTo(MeetingStatus.OPEN)
+            assertThat(meeting.confirmedDate).isNull()
+        }
+
+        @Test
+        fun `날짜 범위 변경 시 스케줄 초기화 플래그 true 반환, status OPEN, confirmedDate null`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.CONFIRMED).also {
+                it.confirmedDate = LocalDate.of(2025, 6, 15)
+            }
+            val newStart = LocalDate.of(2025, 7, 1)
+            val newEnd = LocalDate.of(2025, 7, 31)
+
+            val changed = meeting.update(1L, "새 제목", null, newStart, newEnd)
+
+            assertThat(changed).isTrue()
+            assertThat(meeting.dateRangeStart).isEqualTo(newStart)
+            assertThat(meeting.dateRangeEnd).isEqualTo(newEnd)
+            assertThat(meeting.status).isEqualTo(MeetingStatus.OPEN)
+            assertThat(meeting.confirmedDate).isNull()
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 수정 시 NOT_MEETING_HOST 예외`() {
+            val meeting = meeting(hostId = 1L)
+
+            val ex = assertThrows<MannaException> {
+                meeting.update(99L, "새 제목", null, start, end)
+            }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
+        }
+    }
 }

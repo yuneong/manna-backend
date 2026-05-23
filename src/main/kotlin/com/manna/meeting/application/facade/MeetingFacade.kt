@@ -6,6 +6,7 @@ import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
+import com.manna.meeting.application.command.UpdateMeetingCommand
 import com.manna.meeting.application.command.UpdateScheduleCommand
 import com.manna.meeting.application.info.MeetingInfo
 import com.manna.meeting.application.info.ParticipantInfo
@@ -14,6 +15,7 @@ import com.manna.meeting.domain.service.MeetingDomainService
 import com.manna.meeting.domain.service.RevoteDomainService
 import com.manna.user.domain.service.UserDomainService
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 @Component
 class MeetingFacade(
@@ -32,6 +34,24 @@ class MeetingFacade(
 
     fun joinMeeting(command: JoinMeetingCommand) {
         meetingDomainService.join(command)
+    }
+
+    @Transactional
+    fun updateMeeting(command: UpdateMeetingCommand): MeetingInfo {
+        if (revoteDomainService.hasOpenRevote(command.meetingId)) {
+            throw MannaException(ErrorCode.REVOTE_IN_PROGRESS)
+        }
+        val meeting = meetingDomainService.update(command)
+        val meetingIds = listOf(meeting.id)
+        val participants = resolveParticipants(meetingIds)
+        val responseCount = resolveResponseCounts(meetingIds)[meeting.id] ?: 0
+        return MeetingInfo.from(meeting, participants[meeting.id] ?: emptyList(), responseCount)
+    }
+
+    @Transactional
+    fun deleteMeeting(meetingId: Long, userId: Long) {
+        revoteDomainService.deleteAllByMeetingId(meetingId)
+        meetingDomainService.delete(meetingId, userId)
     }
 
     fun updateSchedule(command: UpdateScheduleCommand) {

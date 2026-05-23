@@ -306,6 +306,56 @@ GET /api/v1/meetings/my
 
 ---
 
+### 약속방 수정 🔒 (방장 전용)
+
+```
+PUT /api/v1/meetings/{meetingId}
+```
+
+**Request**
+```json
+{
+  "title": "6월 동아리 회식",
+  "description": "설명 (optional)",
+  "dateRangeStart": "2026-06-01",
+  "dateRangeEnd": "2026-06-14"
+}
+```
+
+| 필드 | 조건 |
+|---|---|
+| `title` | 50자 이하, 필수 |
+| `description` | 선택 |
+| `dateRangeStart` | 날짜 형식 `YYYY-MM-DD`, 필수 |
+| `dateRangeEnd` | 날짜 형식 `YYYY-MM-DD`, 필수 |
+
+**Response** `200` — MeetingResponse
+
+> 날짜 범위를 변경하면 기존 참여자들의 스케줄이 모두 초기화되고 약속방 status가 OPEN으로 변경됩니다.
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 방장이 아닌 사용자 |
+| `400` (`REVOTE_IN_PROGRESS`) | 재투표 진행 중 |
+
+---
+
+### 약속방 삭제 🔒 (방장 전용)
+
+```
+DELETE /api/v1/meetings/{meetingId}
+```
+
+**Request Body** 없음
+
+**Response** `204` (본문 없음)
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 방장이 아닌 사용자 |
+
+---
+
 ### 약속방 참여 🔒
 
 ```

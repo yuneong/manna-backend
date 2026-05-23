@@ -8,6 +8,7 @@ import com.manna.meeting.interfaces.dto.CreateMeetingRequest
 import com.manna.meeting.interfaces.dto.HeatmapResponse
 import com.manna.meeting.interfaces.dto.MeetingResponse
 import com.manna.meeting.interfaces.dto.MyScheduleResponse
+import com.manna.meeting.interfaces.dto.UpdateMeetingRequest
 import com.manna.meeting.interfaces.dto.UpdateScheduleRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -61,6 +62,29 @@ class MeetingController(private val meetingFacade: MeetingFacade) {
     ): ResponseEntity<List<MeetingResponse>> {
         val infos = meetingFacade.getMyMeetings(userId)
         return ResponseEntity.ok(infos.map { MeetingResponse.from(it) })
+    }
+
+    @Operation(summary = "약속방 수정 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @ApiResponse(responseCode = "200", description = "수정 성공 — 날짜 범위 변경 시 기존 스케줄 삭제 및 status OPEN 초기화")
+    @PutMapping("/{meetingId}")
+    fun updateMeeting(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable meetingId: Long,
+        @Valid @RequestBody request: UpdateMeetingRequest,
+    ): ResponseEntity<MeetingResponse> {
+        val info = meetingFacade.updateMeeting(request.toCommand(meetingId, userId))
+        return ResponseEntity.ok(MeetingResponse.from(info))
+    }
+
+    @Operation(summary = "약속방 삭제 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @ApiResponse(responseCode = "204", description = "삭제 성공")
+    @DeleteMapping("/{meetingId}")
+    fun deleteMeeting(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable meetingId: Long,
+    ): ResponseEntity<Unit> {
+        meetingFacade.deleteMeeting(meetingId, userId)
+        return ResponseEntity.noContent().build()
     }
 
     @Operation(summary = "약속방 참여", security = [SecurityRequirement(name = "Bearer Authentication")])

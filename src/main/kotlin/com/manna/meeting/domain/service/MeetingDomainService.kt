@@ -6,6 +6,7 @@ import com.manna.meeting.application.command.CancelConfirmCommand
 import com.manna.meeting.application.command.ConfirmDateCommand
 import com.manna.meeting.application.command.CreateMeetingCommand
 import com.manna.meeting.application.command.JoinMeetingCommand
+import com.manna.meeting.application.command.UpdateMeetingCommand
 import com.manna.meeting.application.command.UpdateScheduleCommand
 import com.manna.meeting.domain.entity.Meeting
 import com.manna.meeting.domain.entity.MeetingParticipant
@@ -64,6 +65,25 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
             }
             meetingRepository.saveSchedule(MeetingSchedule(meeting = meeting, userId = command.userId, scheduledDate = date))
         }
+    }
+
+    @Transactional
+    fun update(command: UpdateMeetingCommand): Meeting {
+        val meeting = getById(command.meetingId)
+        val dateRangeChanged = meeting.update(command.userId, command.title, command.description, command.dateRangeStart, command.dateRangeEnd)
+        if (dateRangeChanged) {
+            meetingRepository.deleteSchedulesByMeetingId(command.meetingId)
+        }
+        return meetingRepository.save(meeting)
+    }
+
+    @Transactional
+    fun delete(meetingId: Long, userId: Long) {
+        val meeting = getById(meetingId)
+        if (!meeting.isHost(userId)) throw MannaException(ErrorCode.NOT_MEETING_HOST)
+        meetingRepository.deleteSchedulesByMeetingId(meetingId)
+        meetingRepository.deleteParticipantsByMeetingId(meetingId)
+        meetingRepository.delete(meeting)
     }
 
     @Transactional

@@ -26,6 +26,12 @@ class RevoteRepositoryImpl(
     override fun findLatestByMeetingId(meetingId: Long): Revote? =
         revoteJpaRepository.findTopByMeetingIdOrderByCreatedAtDesc(meetingId)
 
+    override fun findAllByMeetingId(meetingId: Long): List<Revote> =
+        revoteJpaRepository.findAllByMeetingId(meetingId)
+
+    override fun deleteRevotesByMeetingId(meetingId: Long) =
+        revoteJpaRepository.deleteByMeetingId(meetingId)
+
     override fun saveCandidate(candidate: RevoteCandidate): RevoteCandidate =
         candidateJpaRepository.save(candidate)
 
@@ -34,6 +40,9 @@ class RevoteRepositoryImpl(
 
     override fun existsCandidateByRevoteIdAndDate(revoteId: Long, date: LocalDate): Boolean =
         candidateJpaRepository.existsByRevoteIdAndCandidateDate(revoteId, date)
+
+    override fun deleteCandidatesByRevoteId(revoteId: Long) =
+        candidateJpaRepository.deleteByRevoteId(revoteId)
 
     override fun saveVote(vote: RevoteVote): RevoteVote = voteJpaRepository.save(vote)
 
@@ -45,4 +54,7 @@ class RevoteRepositoryImpl(
 
     override fun countVotesByRevoteId(revoteId: Long): Int =
         voteJpaRepository.countByRevoteId(revoteId)
+
+    override fun deleteVotesByRevoteId(revoteId: Long) =
+        voteJpaRepository.deleteByRevoteId(revoteId)
 }
