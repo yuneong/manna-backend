@@ -22,11 +22,13 @@ class PlaceService(
     fun propose(command: CreatePlaceCommand): Place {
         val meeting = meetingRepository.findById(command.meetingId)
             ?: throw MannaException(ErrorCode.MEETING_NOT_FOUND)
-        if (meeting.status != MeetingStatus.CONFIRMED) throw MannaException(ErrorCode.MEETING_NOT_CONFIRMED)
+        if (meeting.status != MeetingStatus.CONFIRMED && meeting.status != MeetingStatus.PLACE_VOTING) {
+            throw MannaException(ErrorCode.MEETING_NOT_CONFIRMED)
+        }
         if (meetingRepository.findParticipantByMeetingIdAndUserId(command.meetingId, command.userId) == null) {
             throw MannaException(ErrorCode.NOT_MEETING_PARTICIPANT)
         }
-        return placeRepository.save(
+        val place = placeRepository.save(
             Place(
                 meetingId = command.meetingId,
                 suggestedBy = command.userId,
@@ -35,6 +37,11 @@ class PlaceService(
                 memo = command.memo,
             ),
         )
+        if (meeting.status == MeetingStatus.CONFIRMED) {
+            meeting.status = MeetingStatus.PLACE_VOTING
+            meetingRepository.save(meeting)
+        }
+        return place
     }
 
     @Transactional

@@ -63,18 +63,34 @@ class PlaceServiceTest {
         )
 
         @Test
-        fun `CONFIRMED 상태 약속방에서 참여자가 장소 제안 성공`() {
-            whenever(meetingRepository.findById(1L)).thenReturn(meeting(status = MeetingStatus.CONFIRMED))
+        fun `CONFIRMED 상태에서 첫 제안 성공 — status PLACE_VOTING으로 전환`() {
+            val m = meeting(status = MeetingStatus.CONFIRMED)
+            whenever(meetingRepository.findById(1L)).thenReturn(m)
+            whenever(meetingRepository.findParticipantByMeetingIdAndUserId(1L, 2L)).thenReturn(participant())
+            whenever(placeRepository.save(any())).thenAnswer { it.arguments[0] as Place }
+            whenever(meetingRepository.save(m)).thenReturn(m)
+
+            placeService.propose(command())
+
+            assertThat(m.status).isEqualTo(MeetingStatus.PLACE_VOTING)
+            verify(meetingRepository).save(m)
+        }
+
+        @Test
+        fun `PLACE_VOTING 상태에서 추가 제안 성공 — status 변경 없음`() {
+            val m = meeting(status = MeetingStatus.PLACE_VOTING)
+            whenever(meetingRepository.findById(1L)).thenReturn(m)
             whenever(meetingRepository.findParticipantByMeetingIdAndUserId(1L, 2L)).thenReturn(participant())
             whenever(placeRepository.save(any())).thenAnswer { it.arguments[0] as Place }
 
             placeService.propose(command())
 
-            verify(placeRepository).save(any())
+            assertThat(m.status).isEqualTo(MeetingStatus.PLACE_VOTING)
+            verify(meetingRepository, never()).save(any())
         }
 
         @Test
-        fun `CONFIRMED 아닌 약속방에서 제안 시 MEETING_NOT_CONFIRMED 예외`() {
+        fun `OPEN 상태 약속방에서 제안 시 MEETING_NOT_CONFIRMED 예외`() {
             whenever(meetingRepository.findById(1L)).thenReturn(meeting(status = MeetingStatus.OPEN))
 
             val ex = assertThrows<MannaException> { placeService.propose(command()) }

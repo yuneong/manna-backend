@@ -54,7 +54,7 @@ class Meeting(
 
     fun cancelConfirm(userId: Long) {
         if (hostId != userId) throw MannaException(ErrorCode.NOT_MEETING_HOST)
-        if (status != MeetingStatus.CONFIRMED) throw MannaException(ErrorCode.MEETING_NOT_CONFIRMED)
+        if (status !in CANCELLABLE_STATUSES) throw MannaException(ErrorCode.MEETING_NOT_CONFIRMED)
         confirmedDate = null
         status = MeetingStatus.OPEN
     }
@@ -77,5 +77,13 @@ class Meeting(
 
     fun requireOpen() {
         if (status != MeetingStatus.OPEN) throw MannaException(ErrorCode.MEETING_NOT_OPEN)
+    }
+
+    companion object {
+        val CANCELLABLE_STATUSES = setOf(
+            MeetingStatus.CONFIRMED,
+            MeetingStatus.PLACE_VOTING,
+            MeetingStatus.SETTLING,
+        )
     }
 }

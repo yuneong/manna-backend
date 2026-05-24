@@ -61,7 +61,7 @@ place/
 
 | 메서드 | 규칙 |
 |---|---|
-| `propose()` | MEETING_NOT_FOUND / status != CONFIRMED → `MEETING_NOT_CONFIRMED` / 참여자 아님 → `NOT_MEETING_PARTICIPANT` |
+| `propose()` | MEETING_NOT_FOUND / status가 CONFIRMED·PLACE_VOTING 아님 → `MEETING_NOT_CONFIRMED` / 참여자 아님 → `NOT_MEETING_PARTICIPANT` / status == CONFIRMED이면 제안 후 PLACE_VOTING으로 전환 |
 | `toggleVote()` | 참여자 아님 → `NOT_MEETING_PARTICIPANT` / 장소 없음 → `PLACE_NOT_FOUND` / 다른 약속방 장소 → `PLACE_NOT_FOUND` / 기존 투표 있으면 DELETE, 없으면 INSERT |
 | `getPlaces()` | 약속방의 모든 장소 반환 |
 | `getVotesByPlaceIds()` | 장소 ID 목록의 모든 투표 반환, 빈 리스트면 early return |

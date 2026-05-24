@@ -112,6 +112,30 @@ class MeetingTest {
         }
 
         @Test
+        fun `PLACE_VOTING 상태에서 확정 취소 성공 — status OPEN, confirmedDate null`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.PLACE_VOTING).also {
+                it.confirmedDate = LocalDate.of(2025, 6, 15)
+            }
+
+            meeting.cancelConfirm(userId = 1L)
+
+            assertThat(meeting.status).isEqualTo(MeetingStatus.OPEN)
+            assertThat(meeting.confirmedDate).isNull()
+        }
+
+        @Test
+        fun `SETTLING 상태에서 확정 취소 성공 — status OPEN, confirmedDate null`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.SETTLING).also {
+                it.confirmedDate = LocalDate.of(2025, 6, 15)
+            }
+
+            meeting.cancelConfirm(userId = 1L)
+
+            assertThat(meeting.status).isEqualTo(MeetingStatus.OPEN)
+            assertThat(meeting.confirmedDate).isNull()
+        }
+
+        @Test
         fun `OPEN 상태에서 취소 시 MEETING_NOT_CONFIRMED 예외`() {
             val meeting = meeting(hostId = 1L, status = MeetingStatus.OPEN)
 

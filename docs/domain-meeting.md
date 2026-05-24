@@ -115,11 +115,23 @@ meeting/
 
 ## MeetingStatus
 
-| 상태 | 설명 |
-|---|---|
-| `OPEN` | 날짜 조율 진행 중 |
-| `CONFIRMED` | 날짜 확정 완료 |
-| `CANCELLED` | 약속 취소 |
+| 상태 | 설명 | 진입 트리거 |
+|---|---|---|
+| `OPEN` | 날짜 조율 진행 중 | 초기값 / 확정 취소 |
+| `CONFIRMED` | 날짜 확정 완료 | POST /confirm |
+| `PLACE_VOTING` | 장소 투표 진행 중 | 첫 장소 제안 |
+| `SETTLING` | 정산 진행 중 | POST /settlement (미구현) |
+| `CANCELLED` | 약속 취소 | — |
+
+### 상태 전환 규칙
+
+```
+OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→ PLACE_VOTING ──[정산 생성]──→ SETTLING
+ ↑                        │                              │                              │
+ └────────────────────────┴──[확정 취소]─────────────────┴──────────────────────────────┘
+```
+
+`cancelConfirm` 허용 상태: `CONFIRMED`, `PLACE_VOTING`, `SETTLING`
 
 ## RevoteStatus
 
@@ -139,6 +151,7 @@ meeting/
 | `confirmDate(userId, date)` | 방장 여부 → `NOT_MEETING_HOST` / CANCELLED 상태 → `MEETING_NOT_OPEN` / 날짜 범위 → `DATE_OUT_OF_RANGE` (OPEN·CONFIRMED 모두 가능) |
 | `cancelConfirm(userId)` | 방장 여부 → `NOT_MEETING_HOST` / CONFIRMED 아니면 → `MEETING_NOT_CONFIRMED` / confirmedDate=null, status=OPEN |
 | `update(userId, title, description, dateRangeStart, dateRangeEnd)` | 방장 여부 → `NOT_MEETING_HOST` / 날짜 범위 변경 시 confirmedDate=null, status=OPEN 초기화 / 반환값(Boolean): 날짜 범위 변경 여부 |
+| `cancelConfirm(userId)` | 방장 여부 → `NOT_MEETING_HOST` / CONFIRMED·PLACE_VOTING·SETTLING 아니면 → `MEETING_NOT_CONFIRMED` / confirmedDate=null, status=OPEN |
 | `requireOpen()` | OPEN이 아니면 `MEETING_NOT_OPEN` |
 | `isHost(userId)` | `hostId == userId` |
 

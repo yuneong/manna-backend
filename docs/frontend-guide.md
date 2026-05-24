@@ -766,7 +766,11 @@ POST /api/v1/meetings/{meetingId}/revote/confirm
 |---|---|
 | `OPEN` | 날짜 조율 진행 중 |
 | `CONFIRMED` | 날짜 확정 완료 |
+| `PLACE_VOTING` | 장소 투표 진행 중 (첫 장소 제안 시 자동 전환) |
+| `SETTLING` | 정산 진행 중 |
 | `CANCELLED` | 취소 |
+
+> `DELETE /confirm` (확정 취소)은 `CONFIRMED`, `PLACE_VOTING`, `SETTLING` 모든 상태에서 동작합니다.
 
 ---
 
