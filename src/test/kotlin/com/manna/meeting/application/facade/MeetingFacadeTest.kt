@@ -8,6 +8,7 @@ import com.manna.meeting.domain.entity.MeetingSchedule
 import com.manna.meeting.domain.entity.MeetingStatus
 import com.manna.meeting.domain.service.MeetingDomainService
 import com.manna.meeting.domain.service.RevoteDomainService
+import com.manna.place.domain.service.PlaceService
 import com.manna.user.domain.entity.User
 import com.manna.user.domain.service.UserDomainService
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +26,7 @@ class MeetingFacadeTest {
 
     private val meetingDomainService: MeetingDomainService = mock()
     private val revoteDomainService: RevoteDomainService = mock()
+    private val placeService: PlaceService = mock()
     private val userDomainService: UserDomainService = mock()
     private lateinit var meetingFacade: MeetingFacade
 
@@ -33,7 +35,7 @@ class MeetingFacadeTest {
 
     @BeforeEach
     fun setUp() {
-        meetingFacade = MeetingFacade(meetingDomainService, revoteDomainService, userDomainService)
+        meetingFacade = MeetingFacade(meetingDomainService, revoteDomainService, placeService, userDomainService)
     }
 
     private fun meeting(id: Long = 1L, hostId: Long = 1L) = Meeting(
@@ -235,11 +237,12 @@ class MeetingFacadeTest {
     inner class DeleteMeeting {
 
         @Test
-        fun `삭제 시 revote 삭제 후 meeting 삭제 순으로 호출`() {
+        fun `삭제 시 revote → place → meeting 순서로 삭제 호출`() {
             meetingFacade.deleteMeeting(meetingId = 1L, userId = 1L)
 
-            val inOrder = org.mockito.Mockito.inOrder(revoteDomainService, meetingDomainService)
+            val inOrder = org.mockito.Mockito.inOrder(revoteDomainService, placeService, meetingDomainService)
             inOrder.verify(revoteDomainService).deleteAllByMeetingId(1L)
+            inOrder.verify(placeService).deleteAllByMeetingId(1L)
             inOrder.verify(meetingDomainService).delete(1L, 1L)
         }
     }

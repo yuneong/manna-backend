@@ -519,6 +519,98 @@ PUT /api/v1/meetings/{meetingId}/schedules
 
 ---
 
+## Place API (장소 투표)
+
+> 🔒 모든 장소 API는 `Authorization` 헤더 필요
+
+---
+
+### 장소 목록 조회 🔒
+
+```
+GET /api/v1/meetings/{meetingId}/places
+```
+
+**Response** `200`
+```json
+{
+  "places": [
+    {
+      "id": 1,
+      "name": "와인바 이태원",
+      "url": "https://map.naver.com/...",
+      "memo": "1인당 4-5만원",
+      "proposer": { "id": 1, "nickname": "민지" },
+      "voteCount": 4,
+      "voters": ["민지", "지원", "현우", "예린"],
+      "myVoted": true
+    }
+  ],
+  "totalParticipants": 6
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| `voters` | 투표한 참여자 닉네임 배열 |
+| `myVoted` | 요청한 사용자의 투표 여부 |
+| `totalParticipants` | 약속방 전체 참여자 수 |
+
+> 득표 수 내림차순 정렬됩니다.
+
+---
+
+### 장소 제안 🔒 (참여자 전용)
+
+```
+POST /api/v1/meetings/{meetingId}/places
+```
+
+**사전 조건**: `meeting.status = CONFIRMED`
+
+**Request**
+```json
+{
+  "name": "와인바 이태원",
+  "url": "https://map.naver.com/...",
+  "memo": "1인당 4-5만원"
+}
+```
+
+| 필드 | 조건 |
+|---|---|
+| `name` | 필수 |
+| `url` | 선택 |
+| `memo` | 선택, 120자 이하 |
+
+**Response** `201`
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 참여자가 아닌 사용자 |
+| `400` (`MEETING_NOT_CONFIRMED`) | 약속방이 CONFIRMED 상태가 아님 |
+
+---
+
+### 장소 투표/취소 🔒 (참여자 전용)
+
+```
+POST /api/v1/meetings/{meetingId}/places/{placeId}/vote
+```
+
+**Request Body** 없음
+
+**Response** `200`
+
+> 이미 투표했으면 취소, 없으면 추가하는 토글 방식입니다.
+
+| 에러 코드 | 상황 |
+|---|---|
+| `403` | 참여자가 아닌 사용자 |
+| `404` (`PLACE_NOT_FOUND`) | 존재하지 않는 장소 |
+
+---
+
 ## Revote API (재투표)
 
 > 🔒 모든 재투표 API는 `Authorization` 헤더 필요

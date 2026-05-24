@@ -22,6 +22,9 @@ enum class ErrorCode(
     MEETING_ALREADY_CONFIRMED(HttpStatus.BAD_REQUEST, "이미 확정된 약속방입니다"),
     DATE_OUT_OF_RANGE(HttpStatus.BAD_REQUEST, "약속방 날짜 범위를 벗어난 날짜입니다"),
 
+    // Place
+    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "장소를 찾을 수 없습니다"),
+
     // Revote
     REVOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "진행 중인 재투표가 없습니다"),
     REVOTE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 진행 중인 재투표가 있습니다"),

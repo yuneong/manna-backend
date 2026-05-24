@@ -13,6 +13,7 @@ import com.manna.meeting.application.info.ParticipantInfo
 import com.manna.meeting.application.info.ScheduleHeatmapInfo
 import com.manna.meeting.domain.service.MeetingDomainService
 import com.manna.meeting.domain.service.RevoteDomainService
+import com.manna.place.domain.service.PlaceService
 import com.manna.user.domain.service.UserDomainService
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 class MeetingFacade(
     private val meetingDomainService: MeetingDomainService,
     private val revoteDomainService: RevoteDomainService,
+    private val placeService: PlaceService,
     private val userDomainService: UserDomainService,
 ) {
 
@@ -51,6 +53,7 @@ class MeetingFacade(
     @Transactional
     fun deleteMeeting(meetingId: Long, userId: Long) {
         revoteDomainService.deleteAllByMeetingId(meetingId)
+        placeService.deleteAllByMeetingId(meetingId)
         meetingDomainService.delete(meetingId, userId)
     }
 

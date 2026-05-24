@@ -158,6 +158,12 @@ meeting/
 | `getParticipantCount()` | 약속방 참여자 수 반환 |
 | `isParticipant()` | 특정 사용자의 참여 여부 반환 |
 
+### MeetingFacade.deleteMeeting 삭제 순서
+
+`revoteDomainService.deleteAllByMeetingId` → `placeService.deleteAllByMeetingId` → `meetingDomainService.delete`
+
+---
+
 ### RevoteDomainService — 추가 메서드
 
 | 메서드 | 규칙 |
