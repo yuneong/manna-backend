@@ -299,16 +299,17 @@ oauth:
 ### dev / prod 필요 환경변수
 
 ```
-DB_URL              jdbc:mysql://{host}:3306/manna?...
+DB_URL                      jdbc:mysql://{host}:3306/manna?...
 DB_USERNAME
 DB_PASSWORD
-JWT_SECRET          (32자 이상)
+JWT_SECRET                  (32자 이상)
+OAUTH_FRONTEND_REDIRECT_URI 프론트엔드 OAuth 콜백 페이지 URL
 KAKAO_CLIENT_ID
 KAKAO_CLIENT_SECRET
-KAKAO_REDIRECT_URI
+KAKAO_REDIRECT_URI          {백엔드 주소}/api/v1/auth/kakao/callback
 GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET
-GOOGLE_REDIRECT_URI
+GOOGLE_REDIRECT_URI         {백엔드 주소}/api/v1/auth/google/callback
 ```
 
 ---

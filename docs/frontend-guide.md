@@ -105,14 +105,16 @@ axios.interceptors.response.use(
 
 ```
 1. 프론트엔드 → GET /api/v1/auth/kakao (또는 /google)
-      백엔드가 OAuth 인가 URL로 redirect
+      백엔드가 OAuth 인가 URL로 302 redirect
 
 2. 사용자 → OAuth 로그인 화면에서 승인
 
 3. OAuth 서버 → GET /api/v1/auth/kakao/callback?code={code}
       백엔드가 토큰 교환 + 사용자 정보 조회 + JWT 발급
 
-4. 백엔드 → { accessToken, tokenType } 반환
+4. 백엔드 → {OAUTH_FRONTEND_REDIRECT_URI}?token={accessToken} 로 302 redirect
+
+5. 프론트엔드 콜백 페이지에서 token 쿼리 파라미터 추출 후 저장
 ```
 
 > **첫 로그인 시 자동 회원가입**: 소셜 계정이 DB에 없으면 자동으로 User를 생성합니다.
@@ -142,11 +144,19 @@ GET /api/v1/auth/kakao/callback?code={code}
 
 **인증 불필요** — 카카오 서버가 자동으로 호출합니다.
 
-**Response** `200`
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-  "tokenType": "Bearer"
+JWT 발급 후 아래 URL로 **302 redirect**합니다.
+
+```
+{OAUTH_FRONTEND_REDIRECT_URI}?token={accessToken}
+```
+
+**프론트엔드 콜백 페이지 처리 예시**
+```typescript
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+if (token) {
+  localStorage.setItem('token', token);
+  window.location.href = '/';
 }
 ```
 
@@ -176,13 +186,13 @@ GET /api/v1/auth/google/callback?code={code}
 
 **인증 불필요** — 구글 서버가 자동으로 호출합니다.
 
-**Response** `200`
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-  "tokenType": "Bearer"
-}
+JWT 발급 후 카카오와 **동일한 URL**로 302 redirect합니다.
+
 ```
+{OAUTH_FRONTEND_REDIRECT_URI}?token={accessToken}
+```
+
+> 카카오/구글 콜백 페이지를 하나로 공유해서 사용할 수 있습니다.
 
 | 에러 코드 | 상황 |
 |---|---|
@@ -195,13 +205,16 @@ GET /api/v1/auth/google/callback?code={code}
 소셜 로그인을 활성화하려면 백엔드에 아래 환경변수가 설정되어 있어야 합니다.
 
 ```
-KAKAO_CLIENT_ID        카카오 앱 REST API 키
-KAKAO_CLIENT_SECRET    카카오 앱 Client Secret
-KAKAO_REDIRECT_URI     https://{your-domain}/api/v1/auth/kakao/callback
+OAUTH_FRONTEND_REDIRECT_URI    프론트엔드 콜백 페이지 URL
+                               예) http://localhost:5173/oauth/callback
 
-GOOGLE_CLIENT_ID       Google Cloud Console OAuth 2.0 클라이언트 ID
+KAKAO_CLIENT_ID                카카오 앱 REST API 키
+KAKAO_CLIENT_SECRET            카카오 앱 Client Secret
+KAKAO_REDIRECT_URI             {백엔드 주소}/api/v1/auth/kakao/callback
+
+GOOGLE_CLIENT_ID               Google Cloud Console OAuth 2.0 클라이언트 ID
 GOOGLE_CLIENT_SECRET
-GOOGLE_REDIRECT_URI    https://{your-domain}/api/v1/auth/google/callback
+GOOGLE_REDIRECT_URI            {백엔드 주소}/api/v1/auth/google/callback
 ```
 
 ---
