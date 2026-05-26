@@ -16,6 +16,7 @@ jwt:
   expiration: 86400000
 
 oauth:
+  frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI:}
   kakao:
     client-id: ${KAKAO_CLIENT_ID:}
     client-secret: ${KAKAO_CLIENT_SECRET:}

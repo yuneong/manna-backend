@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class OAuthProperties(
     val kakao: Provider = Provider(),
     val google: Provider = Provider(),
+    val frontendRedirectUri: String = "",
 ) {
     data class Provider(
         val clientId: String = "",
