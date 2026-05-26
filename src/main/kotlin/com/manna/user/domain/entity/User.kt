@@ -1,7 +1,10 @@
 package com.manna.user.domain.entity
 
+import com.manna.common.domain.OAuthProvider
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -26,6 +29,14 @@ class User(
     var nickname: String,
 
     var profileImageUrl: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    val provider: OAuthProvider = OAuthProvider.LOCAL,
+
+    val kakaoId: String? = null,
+
+    val googleId: String? = null,
 
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),

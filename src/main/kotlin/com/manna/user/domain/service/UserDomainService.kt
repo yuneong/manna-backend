@@ -2,13 +2,16 @@ package com.manna.user.domain.service
 
 import com.manna.common.exception.ErrorCode
 import com.manna.common.exception.MannaException
+import com.manna.common.domain.OAuthProvider
 import com.manna.user.application.command.LoginCommand
 import com.manna.user.application.command.SignUpCommand
+import com.manna.user.application.command.SocialLoginCommand
 import com.manna.user.domain.entity.User
 import com.manna.user.domain.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 @Transactional(readOnly = true)
@@ -54,5 +57,25 @@ class UserDomainService(
         val user = getById(id)
         user.softDelete()
         userRepository.save(user)
+    }
+
+    @Transactional
+    fun findOrCreateSocialUser(command: SocialLoginCommand): User {
+        userRepository.findBySocialId(command.provider, command.socialId)?.let { return it }
+
+        val email = command.email?.takeIf { !userRepository.existsByEmail(it) }
+            ?: "${command.provider.name.lowercase()}_${command.socialId}@manna.social"
+
+        return userRepository.save(
+            User(
+                email = email,
+                password = passwordEncoder.encode(UUID.randomUUID().toString()),
+                nickname = command.nickname,
+                profileImageUrl = command.profileImageUrl,
+                provider = command.provider,
+                kakaoId = if (command.provider == OAuthProvider.KAKAO) command.socialId else null,
+                googleId = if (command.provider == OAuthProvider.GOOGLE) command.socialId else null,
+            ),
+        )
     }
 }

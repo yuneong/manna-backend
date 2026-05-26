@@ -49,6 +49,8 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.POST, "/api/v1/users/sign-up", "/api/v1/users/login").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/kakao", "/api/v1/auth/kakao/callback").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/google", "/api/v1/auth/google/callback").permitAll()
                     .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
             }

@@ -1,5 +1,6 @@
 package com.manna.user.infrastructure.repository
 
+import com.manna.common.domain.OAuthProvider
 import com.manna.user.domain.entity.User
 import com.manna.user.domain.repository.UserRepository
 import com.manna.user.infrastructure.jpa.UserJpaRepository
@@ -24,4 +25,11 @@ class UserRepositoryImpl(
 
     override fun findAllByIds(ids: List<Long>): List<User> =
         userJpaRepository.findByIdInAndDeletedAtIsNull(ids)
+
+    override fun findBySocialId(provider: OAuthProvider, socialId: String): User? =
+        when (provider) {
+            OAuthProvider.KAKAO -> userJpaRepository.findByKakaoIdAndDeletedAtIsNull(socialId)
+            OAuthProvider.GOOGLE -> userJpaRepository.findByGoogleIdAndDeletedAtIsNull(socialId)
+            OAuthProvider.LOCAL -> null
+        }
 }
