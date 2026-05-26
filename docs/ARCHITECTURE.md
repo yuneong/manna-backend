@@ -58,11 +58,22 @@ src/main/kotlin/com/manna/
 │   │   ├── JwtTokenProvider.kt
 │   │   └── JwtAuthenticationFilter.kt
 │   ├── config/
-│   │   └── SecurityConfig.kt
+│   │   ├── SecurityConfig.kt
+│   │   ├── OAuthProperties.kt             ← @ConfigurationProperties(prefix = "oauth")
+│   │   └── OAuthConfig.kt                 ← @EnableConfigurationProperties
+│   ├── domain/
+│   │   └── OAuthProvider.kt               ← enum: LOCAL, KAKAO, GOOGLE
 │   └── exception/
 │       ├── ErrorCode.kt
 │       ├── MannaException.kt
 │       └── GlobalExceptionHandler.kt
+├── auth/
+│   ├── application/
+│   │   ├── dto/OAuthUserInfo.kt            ← OAuth 응답 → SocialLoginCommand 변환
+│   │   ├── facade/AuthFacade.kt
+│   │   └── service/OAuthService.kt         ← 카카오/구글 토큰 교환 + 사용자 정보 조회
+│   └── interfaces/
+│       └── controller/AuthController.kt
 ├── user/
 │   ├── domain/
 │   │   ├── entity/User.kt
@@ -71,6 +82,7 @@ src/main/kotlin/com/manna/
 │   ├── application/
 │   │   ├── command/SignUpCommand.kt
 │   │   ├── command/LoginCommand.kt
+│   │   ├── command/SocialLoginCommand.kt
 │   │   ├── info/UserInfo.kt
 │   │   ├── info/TokenInfo.kt
 │   │   └── facade/UserFacade.kt
@@ -174,6 +186,9 @@ validateToken(token: String): Boolean // 유효성 검사
 ### SecurityConfig
 
 - `/api/v1/users/sign-up`, `/api/v1/users/login` — 인증 없이 허용
+- `/api/v1/auth/kakao`, `/api/v1/auth/kakao/callback` — 인증 없이 허용
+- `/api/v1/auth/google`, `/api/v1/auth/google/callback` — 인증 없이 허용
+- `/swagger-ui/**`, `/v3/api-docs/**` — 인증 없이 허용
 - 나머지 모든 경로 — JWT 인증 필수
 - 세션: STATELESS
 - CSRF: disabled
@@ -183,6 +198,7 @@ validateToken(token: String): Boolean // 유효성 검사
 | 코드 | HTTP | 메시지 |
 |---|---|---|
 | `USER_NOT_FOUND` | 404 | 사용자를 찾을 수 없습니다 |
+| `SOCIAL_LOGIN_FAILED` | 401 | 소셜 로그인에 실패했습니다 |
 | `DUPLICATE_EMAIL` | 409 | 이미 사용 중인 이메일입니다 |
 | `INVALID_PASSWORD` | 401 | 비밀번호가 일치하지 않습니다 |
 | `INVALID_TOKEN` | 401 | 유효하지 않은 토큰입니다 |
@@ -264,15 +280,35 @@ spring:
 
 jwt:
   expiration: 86400000  # 24시간 (ms)
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID:}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    redirect-uri: ${KAKAO_REDIRECT_URI:}
+    token-uri: https://kauth.kakao.com/oauth/token
+    user-info-uri: https://kapi.kakao.com/v2/user/me
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:}
+    token-uri: https://oauth2.googleapis.com/token
+    user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
 ```
 
 ### dev / prod 필요 환경변수
 
 ```
-DB_URL        jdbc:mysql://{host}:3306/manna?...
+DB_URL              jdbc:mysql://{host}:3306/manna?...
 DB_USERNAME
 DB_PASSWORD
-JWT_SECRET    (32자 이상)
+JWT_SECRET          (32자 이상)
+KAKAO_CLIENT_ID
+KAKAO_CLIENT_SECRET
+KAKAO_REDIRECT_URI
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+GOOGLE_REDIRECT_URI
 ```
 
 ---
@@ -321,7 +357,6 @@ SPRING_PROFILES_ACTIVE=prod java -jar manna.jar
 
 | 항목 | 내용 |
 |---|---|
-| 카카오 OAuth | `User.kakaoId` 필드 이미 준비됨. `kakao_id`로 로그인 흐름 추가 |
 | 장소 결정 | `place` 도메인 추가 (후보 장소 투표) |
 | 정산 | `settlement` 도메인 추가 |
 | Refresh Token | `TokenInfo`에 `refreshToken` 필드 추가, Redis 저장 |

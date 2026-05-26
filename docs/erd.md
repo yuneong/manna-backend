@@ -37,16 +37,21 @@ meetings ──────────────── meeting_participants
 ```sql
 CREATE TABLE users
 (
-    id                BIGINT       NOT NULL AUTO_INCREMENT,
-    email             VARCHAR(255) NOT NULL,
-    password          VARCHAR(255) NOT NULL,
-    nickname          VARCHAR(20)  NOT NULL,
+    id                BIGINT                          NOT NULL AUTO_INCREMENT,
+    email             VARCHAR(255)                    NOT NULL,
+    password          VARCHAR(255)                    NOT NULL,
+    nickname          VARCHAR(20)                     NOT NULL,
     profile_image_url VARCHAR(500),
-    created_at        DATETIME(6)  NOT NULL,
-    updated_at        DATETIME(6)  NOT NULL,
+    provider          ENUM ('LOCAL', 'KAKAO', 'GOOGLE') NOT NULL DEFAULT 'LOCAL',
+    kakao_id          VARCHAR(100),
+    google_id         VARCHAR(100),
+    created_at        DATETIME(6)                     NOT NULL,
+    updated_at        DATETIME(6)                     NOT NULL,
     deleted_at        DATETIME(6),
     PRIMARY KEY (id),
-    UNIQUE KEY uq_users_email (email)
+    UNIQUE KEY uq_users_email (email),
+    INDEX idx_users_kakao_id (kakao_id),
+    INDEX idx_users_google_id (google_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -172,6 +177,8 @@ CREATE TABLE revote_votes
 | 테이블 | 인덱스 | 용도 |
 |---|---|---|
 | `users` | `uq_users_email` (UNIQUE) | 이메일 중복 체크, 로그인 조회 |
+| `users` | `idx_users_kakao_id` | 카카오 소셜 로그인 사용자 조회 |
+| `users` | `idx_users_google_id` | 구글 소셜 로그인 사용자 조회 |
 | `meetings` | `idx_meetings_host_id` | 방장 기준 약속방 조회 |
 | `meetings` | `idx_meetings_status` | 상태 필터링 |
 | `meeting_participants` | `uq_meeting_participants` (UNIQUE) | 중복 참여 방지 |
@@ -187,6 +194,8 @@ CREATE TABLE revote_votes
 | 컬럼 | 타입 결정 이유 |
 |---|---|
 | `password` VARCHAR(255) | BCrypt 해시 결과는 60자이나 여유 확보 |
+| `provider` ENUM | 가입 경로 구분 — LOCAL(자체), KAKAO, GOOGLE |
+| `kakao_id` / `google_id` VARCHAR(100) | 소셜 플랫폼 고유 ID. 해당 provider가 아니면 NULL |
 | `nickname` VARCHAR(20) | Request Validation 상한과 일치 |
 | `title` VARCHAR(50) | Request Validation 상한과 일치 |
 | `status` ENUM | 애플리케이션과 DB 모두에서 값 제한 |
@@ -201,3 +210,4 @@ CREATE TABLE revote_votes
 | v1.0.0 | 2026-05-19 | 최초 작성 — users, meetings, meeting_participants, availability |
 | v1.1.0 | 2026-05-21 | availability → meeting_schedules 테이블 rename, available_date → scheduled_date |
 | v1.2.0 | 2026-05-22 | 재투표 기능 추가 — revotes, revote_candidates, revote_votes |
+| v1.3.0 | 2026-05-26 | 소셜 로그인 — users 테이블에 provider, kakao_id, google_id 컬럼 추가 |

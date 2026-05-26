@@ -77,6 +77,7 @@ Authorization: Bearer {accessToken}
 | `"로그인이 필요합니다"` | Authorization 헤더 자체가 없는 경우 |
 | `"유효하지 않은 토큰입니다"` | 토큰이 만료되었거나 변조된 경우 |
 | `"비밀번호가 일치하지 않습니다"` | 로그인 시 비밀번호 불일치 |
+| `"소셜 로그인에 실패했습니다"` | OAuth 서버 통신 실패 또는 잘못된 code |
 
 **401 응답 처리 권장 방법**: axios interceptor 등으로 401을 감지해 저장된 토큰을 삭제하고 로그인 화면으로 redirect합니다.
 
@@ -91,6 +92,116 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+```
+
+---
+
+## Social Login API
+
+소셜 로그인은 OAuth 2.0 Authorization Code Flow를 사용합니다.
+프론트엔드에서 직접 OAuth 서버를 호출하지 않고, 백엔드 redirect 엔드포인트를 통해 흐름을 시작합니다.
+
+### 흐름
+
+```
+1. 프론트엔드 → GET /api/v1/auth/kakao (또는 /google)
+      백엔드가 OAuth 인가 URL로 redirect
+
+2. 사용자 → OAuth 로그인 화면에서 승인
+
+3. OAuth 서버 → GET /api/v1/auth/kakao/callback?code={code}
+      백엔드가 토큰 교환 + 사용자 정보 조회 + JWT 발급
+
+4. 백엔드 → { accessToken, tokenType } 반환
+```
+
+> **첫 로그인 시 자동 회원가입**: 소셜 계정이 DB에 없으면 자동으로 User를 생성합니다.
+> 이메일이 이미 다른 provider 계정에 사용 중이면 `{provider}_{socialId}@manna.social` 형식의 임시 이메일이 할당됩니다.
+
+---
+
+### 카카오 로그인 시작
+
+```
+GET /api/v1/auth/kakao
+```
+
+**인증 불필요**
+
+백엔드가 카카오 인가 URL로 HTTP 302 redirect합니다.
+
+> 브라우저에서 직접 이 URL로 이동하거나 `window.location.href = '/api/v1/auth/kakao'` 방식으로 호출합니다.
+
+---
+
+### 카카오 콜백 (자동 호출)
+
+```
+GET /api/v1/auth/kakao/callback?code={code}
+```
+
+**인증 불필요** — 카카오 서버가 자동으로 호출합니다.
+
+**Response** `200`
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer"
+}
+```
+
+| 에러 코드 | 상황 |
+|---|---|
+| `401` (`SOCIAL_LOGIN_FAILED`) | OAuth 서버 통신 실패, 잘못된 code |
+
+---
+
+### 구글 로그인 시작
+
+```
+GET /api/v1/auth/google
+```
+
+**인증 불필요**
+
+백엔드가 구글 인가 URL로 HTTP 302 redirect합니다. scope: `openid email profile`
+
+---
+
+### 구글 콜백 (자동 호출)
+
+```
+GET /api/v1/auth/google/callback?code={code}
+```
+
+**인증 불필요** — 구글 서버가 자동으로 호출합니다.
+
+**Response** `200`
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer"
+}
+```
+
+| 에러 코드 | 상황 |
+|---|---|
+| `401` (`SOCIAL_LOGIN_FAILED`) | OAuth 서버 통신 실패, 잘못된 code |
+
+---
+
+### 환경변수 (백엔드 설정 참고)
+
+소셜 로그인을 활성화하려면 백엔드에 아래 환경변수가 설정되어 있어야 합니다.
+
+```
+KAKAO_CLIENT_ID        카카오 앱 REST API 키
+KAKAO_CLIENT_SECRET    카카오 앱 Client Secret
+KAKAO_REDIRECT_URI     https://{your-domain}/api/v1/auth/kakao/callback
+
+GOOGLE_CLIENT_ID       Google Cloud Console OAuth 2.0 클라이언트 ID
+GOOGLE_CLIENT_SECRET
+GOOGLE_REDIRECT_URI    https://{your-domain}/api/v1/auth/google/callback
 ```
 
 ---
