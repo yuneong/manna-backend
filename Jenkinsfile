@@ -47,6 +47,8 @@ pipeline {
                     docker run -d --name manna-backend \
                       -p 8081:8080 \
                       --restart unless-stopped \
+                      --env-file /home/ubuntu/.env \
+                      -e SPRING_PROFILES_ACTIVE=production \
                       $ECR_REPO:latest
                 '''
             }
