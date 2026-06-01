@@ -9,6 +9,7 @@ import java.time.LocalDateTime
 data class ParticipantDto(
     val id: Long,
     val nickname: String,
+    val profileImageUrl: String? = null,
 )
 
 data class MeetingResponse(
@@ -41,7 +42,7 @@ data class MeetingResponse(
             createdAt = info.createdAt,
             participantCount = info.participantCount,
             responseCount = info.responseCount,
-            participants = info.participants.map { ParticipantDto(it.id, it.nickname) },
+            participants = info.participants.map { ParticipantDto(it.id, it.nickname, it.profileImageUrl) },
             isParticipant = info.isParticipant,
             hasRevote = info.hasRevote,
         )

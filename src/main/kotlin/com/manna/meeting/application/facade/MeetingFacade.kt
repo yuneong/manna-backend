@@ -128,7 +128,7 @@ class MeetingFacade(
         return allParticipants.groupBy { it.meeting.id }
             .mapValues { (_, participants) ->
                 participants.mapNotNull { p ->
-                    userMap[p.userId]?.let { user -> ParticipantInfo(user.id, user.nickname) }
+                    userMap[p.userId]?.let { user -> ParticipantInfo(user.id, user.nickname, user.profileImageUrl) }
                 }
             }
     }

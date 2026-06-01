@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 data class ParticipantInfo(
     val id: Long,
     val nickname: String,
+    val profileImageUrl: String? = null,
 )
 
 data class MeetingInfo(
