@@ -136,6 +136,20 @@ class RevoteDomainService(
         meetingRepository.save(meeting)
     }
 
+    @Transactional
+    fun cancelRevote(meetingId: Long, userId: Long) {
+        val meeting = meetingRepository.findById(meetingId)
+            ?: throw MannaException(ErrorCode.MEETING_NOT_FOUND)
+        if (!meeting.isHost(userId)) throw MannaException(ErrorCode.NOT_MEETING_HOST)
+
+        val revote = revoteRepository.findOpenByMeetingId(meetingId)
+            ?: throw MannaException(ErrorCode.REVOTE_NOT_FOUND)
+
+        revoteRepository.deleteVotesByRevoteId(revote.id)
+        revoteRepository.deleteCandidatesByRevoteId(revote.id)
+        revoteRepository.deleteRevotesByMeetingId(meetingId)
+    }
+
     fun hasOpenRevote(meetingId: Long): Boolean =
         revoteRepository.findOpenByMeetingId(meetingId) != null
 

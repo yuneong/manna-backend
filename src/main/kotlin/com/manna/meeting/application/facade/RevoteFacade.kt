@@ -37,6 +37,10 @@ class RevoteFacade(
         revoteDomainService.confirmRevote(command)
     }
 
+    fun cancelRevote(meetingId: Long, userId: Long) {
+        revoteDomainService.cancelRevote(meetingId, userId)
+    }
+
     private fun buildRevoteInfo(data: RevoteStatusData): RevoteInfo {
         val voterIds = data.votes.map { it.userId }.distinct()
         val userMap = if (voterIds.isEmpty()) emptyMap()

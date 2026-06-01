@@ -12,6 +12,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -54,6 +55,16 @@ class RevoteController(private val revoteFacade: RevoteFacade) {
     ): ResponseEntity<RevoteResponse> {
         val info = revoteFacade.getRevoteStatus(meetingId, userId)
         return ResponseEntity.ok(RevoteResponse.from(info))
+    }
+
+    @Operation(summary = "재투표 취소 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @DeleteMapping
+    fun cancelRevote(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable meetingId: Long,
+    ): ResponseEntity<Unit> {
+        revoteFacade.cancelRevote(meetingId, userId)
+        return ResponseEntity.ok().build()
     }
 
     @Operation(summary = "재동률 방장 확정 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])
