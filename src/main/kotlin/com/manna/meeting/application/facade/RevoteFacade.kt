@@ -5,6 +5,7 @@ import com.manna.meeting.application.command.CreateRevoteCommand
 import com.manna.meeting.application.command.VoteRevoteCommand
 import com.manna.meeting.application.info.RevoteCandidateInfo
 import com.manna.meeting.application.info.RevoteInfo
+import com.manna.meeting.application.info.VoterInfo
 import com.manna.meeting.domain.service.RevoteDomainService
 import com.manna.meeting.domain.service.RevoteStatusData
 import com.manna.user.domain.service.UserDomainService
@@ -47,7 +48,7 @@ class RevoteFacade(
             RevoteCandidateInfo(
                 date = candidate.candidateDate,
                 count = dateVotes.size,
-                voters = dateVotes.mapNotNull { userMap[it.userId]?.nickname },
+                voters = dateVotes.mapNotNull { vote -> userMap[vote.userId]?.let { VoterInfo(it.id, it.nickname) } },
             )
         }
         return RevoteInfo(
