@@ -7,7 +7,7 @@
 
 ## 📌 프로젝트 소개
 
-친구들과 약속 하나를 잡으려면, 각자 일정을 공유하고 누군가 취합해서 되는 날을 찾고, 장소 후보를 돌리고 의견을 모으고, 만남이 끝나면 정산까지 해야 합니다.
+친구들과 약속 하나를 잡으려면, 각자 일정을 공유하고 누군가 취합해서 되는 날을 찾고, 장소 후보를 올려서 의견을 모으고, 만남이 끝나면 정산까지 해야 합니다.
 
 **manna**는 이 흐름을 하나의 약속방에서 끝낼 수 있도록 만든 웹 서비스입니다.
 
@@ -89,7 +89,12 @@ src/main/kotlin/com/manna/
 ## 📱 화면 소개
 
 ### 회원가입 / 로그인
-<!-- ![login](docs/images/login.png) -->
+
+| | |
+|---|---|
+| ![login](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/login.png) | ![signup](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/signup.png) |
+| 로그인 | 회원가입 |
+
 - 이메일·비밀번호(영문+숫자 8자 이상)·닉네임 입력으로 가입. 이메일 중복 시 즉시 안내
 - 이메일 저장 옵션 제공. 로그인 후 이전에 접근하려던 페이지로 자동 이동
 - 카카오 소셜 로그인 지원
@@ -97,68 +102,115 @@ src/main/kotlin/com/manna/
 ---
 
 ### 약속방
-<!-- ![home](docs/images/home.png) -->
+
+| | |
+|---|---|
+| ![meeting-list-empty](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/meeting-list-empty.png) | ![meeting-list](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/meeting-list.png) |
+| 약속 없을 때 | 약속 목록 |
+
 - 내가 참여 중인 약속을 카드 목록으로 확인. 약속이 없으면 만들기 안내 화면 표시
 
 ### 약속 만들기
-<!-- ![create](docs/images/create.png) -->
+
+| | |
+|---|---|
+| ![meeting-create](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/meeting-create.png) | ![meeting-create-filled](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/meeting-create-filled.png) |
+| 빈 폼 | 입력 중 |
+
 - 제목(최대 50자), 설명(선택), 날짜 범위를 입력해 약속방 생성
 - 필수 항목 미입력 시 제출 차단
 
 ### 약속 수정
-<!-- ![edit](docs/images/edit.png) -->
+
+| | |
+|---|---|
+| ![meeting-detail](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/meeting-detail.png) | ![meeting-edit-warning](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/meeting-edit-warning.png) |
+| 약속 상세 | 날짜 범위 변경 경고 |
+
 - 제목·설명·날짜 범위 수정 가능
 - 날짜 범위를 바꾸면 기존 참여자 응답이 초기화된다는 경고 모달 표시
-
-> **예시** — "8월 제주 여행 날짜 잡기"라는 약속방을 만들고, 상단의 링크 복사 버튼으로 친구들에게 공유해 참여를 유도한다.
 
 ---
 
 ### 약속 상세 — 일정 탭
-<!-- ![schedule-my](docs/images/schedule-my.png) -->
 
 참여자가 각자 가능한 날짜를 입력하고, 방장이 최종 날짜를 확정합니다.
 
 **내 일정**
-<!-- ![schedule-heatmap](docs/images/schedule-heatmap.png) -->
+
+![schedule-my](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-my.png)
+
 - 캘린더에서 가능한 날짜를 직접 탭/클릭해 선택·저장. 확정 전까지 언제든 수정 가능
 
 **히트맵**
+
+| | |
+|---|---|
+| ![schedule-heatmap-host](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-heatmap-host.png) | ![schedule-heatmap-member](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-heatmap-member.png) |
+| 방장 시점 | 참여자 시점 |
+
 - 날짜별 참여 가능 인원을 4단계 색상으로 시각화
 - 셀 클릭 시 해당 날짜의 가능/불가 참여자 목록 표시
 
 **날짜 확정 (방장)**
-<!-- ![confirm](docs/images/confirm.png) -->
+
+| | |
+|---|---|
+| ![schedule-confirm-all](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-confirm-all.png) | ![schedule-confirm-partial](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-confirm-partial.png) |
+| 전원 가능 | 일부 불가 |
+
 - 히트맵에서 날짜를 선택하면 우측에 가능 인원 비율과 참여자 명단 표시
 - 전원 가능이면 파란 확정 버튼, 일부 불가면 주의 문구와 함께 확정 가능
 
-> **예시** — 10명 중 8명이 가능한 날짜가 히트맵에서 가장 진하게 표시된다. 방장이 해당 날짜를 클릭해 "8/10명 가능" 안내를 확인하고 확정한다.
+| | |
+|---|---|
+| ![schedule-confirmed](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-confirmed.png) | ![schedule-confirm-cancel](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-confirm-cancel.png) |
+| 확정 완료 | 확정 취소 |
+
+**동률 — 직접 결정 (방장)**
+
+| | |
+|---|---|
+| ![schedule-tie-direct](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-tie-direct.png) | ![schedule-tie-direct-confirm](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/schedule-tie-direct-confirm.png) |
+| 동률 직접 결정 | 직접 결정 확정 |
 
 **재투표 후보 선정 (방장)**
-<!-- ![revote-new](docs/images/revote-new.png) -->
+
+![revote-select](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/revote-select.png)
+
 - 동률이 난 경우 방장이 2개 이상의 후보 날짜를 골라 재투표 시작
 - 전원 가능 / 일부 불가 여부를 색상과 텍스트로 구분
 
 **재투표**
-<!-- ![revote](docs/images/revote.png) -->
-- 참여자: 후보 날짜 중 1개를 선택해 투표. 투표 후에도 변경 가능
-- 방장: 후보별 득표수·투표자 명단·미투표자 목록 실시간 확인(10초 폴링). 결과 확정 또는 동률 시 직접 결정
 
-> **예시** — 8/3과 8/5가 동률이면 방장이 두 날짜를 후보로 재투표를 열고, 참여자들이 다시 1개를 골라 투표한다.
+| | | |
+|---|---|---|
+| ![revote-host](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/revote-host.png) | ![revote-member](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/revote-member.png) | ![revote-in-progress](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/revote-in-progress.png) |
+| 방장 결과 화면 | 참여자 투표 화면 | 진행 중 배너 |
+
+| | |
+|---|---|
+| ![revote-done](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/revote-done.png) | ![revote-cancel](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/revote-cancel.png) |
+| 재투표 완료 | 재투표 취소 |
+
+- 참여자: 후보 날짜 중 1개를 선택해 투표. 투표 후에도 변경 가능
+- 방장: 참여자와 같은 기능 + 후보별 득표수·투표자 명단·미투표자 목록 실시간 확인. 결과 확정 또는 동률 시 직접 결정
 
 ---
 
 ### 약속 상세 — 장소 탭
-<!-- ![place](docs/images/place.png) -->
 
 참여자가 장소를 제안하고 마음에 드는 곳에 투표합니다.
+
+| | | |
+|---|---|---|
+| ![place-empty](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/place-empty.png) | ![place-first](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/place-first.png) | ![place-tie-first](https://raw.githubusercontent.com/yuneong/manna-frontend/main/docs/images/place-tie-first.png) |
+| 제안 전 | 단독 1위 | 공동 1위 |
 
 - 장소 이름, 링크(선택), 메모(선택)를 입력해 제안. 누구나 여러 장소를 제안 가능
 - 마음에 드는 장소의 하트 버튼을 눌러 투표. 여러 장소에 중복 투표 가능하며 재클릭 시 취소
 - 장소 카드는 득표 순으로 정렬. 1위 장소는 강조 테두리와 1위 배지로 표시. 공동 1위면 공동 1위 배지 표시
 - 각 카드에 제안자 닉네임, 투표자 아바타, 득표수/전체 인원(예: 4/10명) 표시
-
-> **예시** — 누군가 "을지로 맥줏집"을 링크와 함께 제안하고, 6명이 하트를 눌러 1위가 된다. 다른 제안들과 득표수가 카드에 나란히 표시된다.
 
 ---
 
@@ -184,8 +236,8 @@ src/main/kotlin/com/manna/
 
 ## 📁 관련 레포지토리
 
-- **Backend**: [manna-backend](https://github.com/{username}/manna-backend) ← 현재 레포
-- **Frontend**: [manna-frontend](https://github.com/{username}/manna-frontend)
+- **Backend**: [manna-backend](https://github.com/yuneong/manna-backend) ← 현재 레포
+- **Frontend**: [manna-frontend](https://github.com/yuneong/manna-frontend)
 
 <br>
 
