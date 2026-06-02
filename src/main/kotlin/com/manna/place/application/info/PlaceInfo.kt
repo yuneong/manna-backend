@@ -6,6 +6,8 @@ import com.manna.user.domain.entity.User
 
 data class ProposerInfo(val id: Long, val nickname: String)
 
+data class VoterInfo(val id: Long, val nickname: String, val profileImageUrl: String?)
+
 data class PlaceInfo(
     val id: Long,
     val name: String,
@@ -13,7 +15,7 @@ data class PlaceInfo(
     val memo: String?,
     val proposer: ProposerInfo,
     val voteCount: Int,
-    val voters: List<String>,
+    val voters: List<VoterInfo>,
     val myVoted: Boolean,
 ) {
     companion object {
@@ -35,7 +37,9 @@ data class PlaceInfo(
                     nickname = proposer?.nickname ?: "",
                 ),
                 voteCount = votes.size,
-                voters = votes.mapNotNull { userMap[it.userId]?.nickname },
+                voters = votes.mapNotNull { vote ->
+                    userMap[vote.userId]?.let { VoterInfo(it.id, it.nickname, it.profileImageUrl) }
+                },
                 myVoted = votes.any { it.userId == requestUserId },
             )
         }

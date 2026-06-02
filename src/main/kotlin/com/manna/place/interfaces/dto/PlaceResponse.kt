@@ -5,6 +5,8 @@ import com.manna.place.application.info.PlacesInfo
 
 data class ProposerResponse(val id: Long, val nickname: String)
 
+data class VoterResponse(val id: Long, val nickname: String, val profileImageUrl: String?)
+
 data class PlaceResponse(
     val id: Long,
     val name: String,
@@ -12,7 +14,7 @@ data class PlaceResponse(
     val memo: String?,
     val proposer: ProposerResponse,
     val voteCount: Int,
-    val voters: List<String>,
+    val voters: List<VoterResponse>,
     val myVoted: Boolean,
 ) {
     companion object {
@@ -23,7 +25,7 @@ data class PlaceResponse(
             memo = info.memo,
             proposer = ProposerResponse(info.proposer.id, info.proposer.nickname),
             voteCount = info.voteCount,
-            voters = info.voters,
+            voters = info.voters.map { VoterResponse(it.id, it.nickname, it.profileImageUrl) },
             myVoted = info.myVoted,
         )
     }
