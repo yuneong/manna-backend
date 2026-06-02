@@ -74,26 +74,6 @@ class RevoteDomainService(
             revoteRepository.saveVote(RevoteVote(revoteId = revote.id, userId = command.userId, votedDate = command.votedDate))
         }
 
-        val totalParticipants = meetingRepository.findParticipantsByMeetingId(command.meetingId).size
-        val totalVotes = revoteRepository.countVotesByRevoteId(revote.id)
-        if (totalVotes == totalParticipants) {
-            autoResolve(revote, command.meetingId)
-        }
-    }
-
-    private fun autoResolve(revote: Revote, meetingId: Long) {
-        val votes = revoteRepository.findVotesByRevoteId(revote.id)
-        val voteCounts = votes.groupBy { it.votedDate }.mapValues { it.value.size }
-        val maxVotes = voteCounts.values.maxOrNull() ?: return
-        val winners = voteCounts.filter { it.value == maxVotes }.keys
-
-        if (winners.size == 1) {
-            val meeting = meetingRepository.findById(meetingId) ?: return
-            meeting.confirmedDate = winners.first()
-            meeting.status = MeetingStatus.CONFIRMED
-            meetingRepository.save(meeting)
-            // revote는 OPEN 유지 — 방장이 /revote/confirm 호출 시 CLOSED로 변경
-        }
     }
 
     fun getRevoteStatusData(meetingId: Long, userId: Long): RevoteStatusData {
