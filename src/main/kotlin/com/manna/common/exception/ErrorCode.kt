@@ -33,4 +33,10 @@ enum class ErrorCode(
     REVOTE_INVALID_CANDIDATE_DATE(HttpStatus.BAD_REQUEST, "유효하지 않은 후보 날짜입니다"),
     REVOTE_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "아직 전원 투표가 완료되지 않았습니다"),
     REVOTE_IN_PROGRESS(HttpStatus.BAD_REQUEST, "재투표가 진행 중입니다"),
+
+    // Settlement
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "정산을 찾을 수 없습니다"),
+    SETTLEMENT_NOT_CREATOR(HttpStatus.FORBIDDEN, "정산 수금자만 가능한 작업입니다"),
+    SETTLEMENT_NOT_PARTICIPANT(HttpStatus.FORBIDDEN, "정산 대상자가 아닙니다"),
+    SETTLEMENT_NOT_ALL_PAID(HttpStatus.BAD_REQUEST, "아직 모든 참여자가 납부를 완료하지 않았습니다"),
 }
