@@ -2,8 +2,10 @@ package com.manna.user.domain.service
 
 import com.manna.common.exception.ErrorCode
 import com.manna.common.exception.MannaException
+import com.manna.common.domain.OAuthProvider
 import com.manna.user.application.command.LoginCommand
 import com.manna.user.application.command.SignUpCommand
+import com.manna.user.application.command.SocialLoginCommand
 import com.manna.user.domain.entity.User
 import com.manna.user.domain.repository.UserRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -126,6 +128,79 @@ class UserDomainServiceTest {
 
             val ex = assertThrows<MannaException> { userDomainService.withdraw(999L) }
             assertThat(ex.errorCode).isEqualTo(ErrorCode.USER_NOT_FOUND)
+        }
+    }
+
+    @Nested
+    inner class FindOrCreateSocialUser {
+
+        private fun command(
+            provider: OAuthProvider = OAuthProvider.KAKAO,
+            socialId: String = "kakao_123",
+            email: String? = "social@kakao.com",
+            nickname: String = "카카오유저",
+        ) = SocialLoginCommand(
+            provider = provider,
+            socialId = socialId,
+            email = email,
+            nickname = nickname,
+            profileImageUrl = null,
+        )
+
+        @Test
+        fun `이미 가입된 소셜 계정이면 기존 유저 반환 — 저장 없음`() {
+            val existing = user(id = 5L, email = "social@kakao.com", nickname = "카카오유저")
+            whenever(userRepository.findBySocialId(OAuthProvider.KAKAO, "kakao_123"))
+                .thenReturn(existing)
+
+            val result = userDomainService.findOrCreateSocialUser(command())
+
+            assertThat(result.id).isEqualTo(5L)
+            verify(userRepository, org.mockito.kotlin.never()).save(org.mockito.kotlin.any())
+        }
+
+        @Test
+        fun `신규 소셜 사용자 — 이메일 사용 가능하면 해당 이메일로 저장`() {
+            val saved = user(id = 6L, email = "social@kakao.com", nickname = "카카오유저")
+
+            whenever(userRepository.findBySocialId(OAuthProvider.KAKAO, "kakao_123")).thenReturn(null)
+            whenever(userRepository.existsByEmail("social@kakao.com")).thenReturn(false)
+            whenever(passwordEncoder.encode(org.mockito.kotlin.any())).thenReturn("encoded_pw")
+            whenever(userRepository.save(org.mockito.kotlin.any())).thenReturn(saved)
+
+            val result = userDomainService.findOrCreateSocialUser(command())
+
+            assertThat(result.email).isEqualTo("social@kakao.com")
+            verify(userRepository).save(org.mockito.kotlin.any())
+        }
+
+        @Test
+        fun `신규 소셜 사용자 — 이메일 충돌 시 fallback 이메일로 저장`() {
+            val fallbackEmail = "kakao_kakao_123@manna.social"
+            val saved = user(id = 7L, email = fallbackEmail, nickname = "카카오유저")
+
+            whenever(userRepository.findBySocialId(OAuthProvider.KAKAO, "kakao_123")).thenReturn(null)
+            whenever(userRepository.existsByEmail("social@kakao.com")).thenReturn(true)
+            whenever(passwordEncoder.encode(org.mockito.kotlin.any())).thenReturn("encoded_pw")
+            whenever(userRepository.save(org.mockito.kotlin.any())).thenReturn(saved)
+
+            val result = userDomainService.findOrCreateSocialUser(command())
+
+            assertThat(result.email).isEqualTo(fallbackEmail)
+        }
+
+        @Test
+        fun `이메일 null 전달 시 fallback 이메일로 저장`() {
+            val fallbackEmail = "kakao_kakao_123@manna.social"
+            val saved = user(id = 8L, email = fallbackEmail, nickname = "카카오유저")
+
+            whenever(userRepository.findBySocialId(OAuthProvider.KAKAO, "kakao_123")).thenReturn(null)
+            whenever(passwordEncoder.encode(org.mockito.kotlin.any())).thenReturn("encoded_pw")
+            whenever(userRepository.save(org.mockito.kotlin.any())).thenReturn(saved)
+
+            val result = userDomainService.findOrCreateSocialUser(command(email = null))
+
+            assertThat(result.email).isEqualTo(fallbackEmail)
         }
     }
 }
