@@ -282,6 +282,42 @@ class MeetingDomainServiceTest {
     }
 
     @Nested
+    inner class MarkDone {
+
+        @Test
+        fun `SETTLING 상태에서 약속 종료 성공 — status DONE`() {
+            val found = meeting(hostId = 1L, status = MeetingStatus.SETTLING)
+
+            whenever(meetingRepository.findById(1L)).thenReturn(found)
+            whenever(meetingRepository.save(any())).thenReturn(found)
+
+            val result = meetingDomainService.markDone(1L, 1L)
+
+            assertThat(result.status).isEqualTo(MeetingStatus.DONE)
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 요청 시 NOT_MEETING_HOST 예외`() {
+            whenever(meetingRepository.findById(1L))
+                .thenReturn(meeting(hostId = 1L, status = MeetingStatus.SETTLING))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.markDone(1L, 2L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
+            verify(meetingRepository, never()).save(any())
+        }
+
+        @Test
+        fun `SETTLING 아닌 상태에서 종료 시 MEETING_NOT_SETTLING 예외`() {
+            whenever(meetingRepository.findById(1L))
+                .thenReturn(meeting(hostId = 1L, status = MeetingStatus.PLACE_VOTING))
+
+            val ex = assertThrows<MannaException> { meetingDomainService.markDone(1L, 1L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_SETTLING)
+            verify(meetingRepository, never()).save(any())
+        }
+    }
+
+    @Nested
     inner class IsParticipant {
 
         @Test

@@ -172,6 +172,35 @@ class MeetingTest {
     }
 
     @Nested
+    inner class MarkDone {
+
+        @Test
+        fun `SETTLING 상태에서 약속 종료 성공 — status DONE`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.SETTLING)
+
+            meeting.markDone(userId = 1L)
+
+            assertThat(meeting.status).isEqualTo(MeetingStatus.DONE)
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 요청 시 NOT_MEETING_HOST 예외`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.SETTLING)
+
+            val ex = assertThrows<MannaException> { meeting.markDone(userId = 2L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.NOT_MEETING_HOST)
+        }
+
+        @Test
+        fun `SETTLING 아닌 상태에서 종료 시 MEETING_NOT_SETTLING 예외`() {
+            val meeting = meeting(hostId = 1L, status = MeetingStatus.PLACE_VOTING)
+
+            val ex = assertThrows<MannaException> { meeting.markDone(userId = 1L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.MEETING_NOT_SETTLING)
+        }
+    }
+
+    @Nested
     inner class IsHost {
 
         @Test

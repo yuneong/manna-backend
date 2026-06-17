@@ -9,6 +9,7 @@ import com.manna.meeting.domain.entity.MeetingStatus
 import com.manna.meeting.domain.service.MeetingDomainService
 import com.manna.meeting.domain.service.RevoteDomainService
 import com.manna.place.domain.service.PlaceService
+import com.manna.settlement.domain.service.SettlementService
 import com.manna.user.domain.entity.User
 import com.manna.user.domain.service.UserDomainService
 import org.assertj.core.api.Assertions.assertThat
@@ -27,6 +28,7 @@ class MeetingFacadeTest {
     private val meetingDomainService: MeetingDomainService = mock()
     private val revoteDomainService: RevoteDomainService = mock()
     private val placeService: PlaceService = mock()
+    private val settlementService: SettlementService = mock()
     private val userDomainService: UserDomainService = mock()
     private lateinit var meetingFacade: MeetingFacade
 
@@ -35,7 +37,7 @@ class MeetingFacadeTest {
 
     @BeforeEach
     fun setUp() {
-        meetingFacade = MeetingFacade(meetingDomainService, revoteDomainService, placeService, userDomainService)
+        meetingFacade = MeetingFacade(meetingDomainService, revoteDomainService, placeService, settlementService, userDomainService)
     }
 
     private fun meeting(id: Long = 1L, hostId: Long = 1L) = Meeting(
@@ -230,6 +232,71 @@ class MeetingFacadeTest {
             val result = meetingFacade.updateMeeting(command())
 
             assertThat(result.id).isEqualTo(1L)
+        }
+    }
+
+    @Nested
+    inner class MarkDone {
+
+        private fun settlingMeeting(id: Long = 1L, hostId: Long = 1L) = Meeting(
+            id = id,
+            hostId = hostId,
+            title = "테스트 약속",
+            dateRangeStart = start,
+            dateRangeEnd = end,
+            status = MeetingStatus.SETTLING,
+        )
+
+        @Test
+        fun `약속 종료 성공 — status DONE 반환`() {
+            val before = settlingMeeting()
+            val after = Meeting(
+                id = 1L, hostId = 1L, title = "테스트 약속",
+                dateRangeStart = start, dateRangeEnd = end, status = MeetingStatus.DONE,
+            )
+            val participant = MeetingParticipant(meeting = after, userId = 1L)
+
+            whenever(meetingDomainService.getById(1L)).thenReturn(before)
+            whenever(settlementService.isAllSettlementsCompleted(1L)).thenReturn(true)
+            whenever(meetingDomainService.markDone(1L, 1L)).thenReturn(after)
+            whenever(meetingDomainService.getParticipantsByMeetingIds(listOf(1L))).thenReturn(listOf(participant))
+            whenever(meetingDomainService.getSchedulesByMeetingIds(listOf(1L))).thenReturn(emptyList())
+            whenever(userDomainService.getUsersByIds(listOf(1L))).thenReturn(listOf(user(1L)))
+
+            val result = meetingFacade.markDone(1L, 1L)
+
+            assertThat(result.status).isEqualTo(MeetingStatus.DONE)
+        }
+
+        @Test
+        fun `방장이 아닌 사용자 요청 시 NOT_MEETING_HOST 예외`() {
+            whenever(meetingDomainService.getById(1L)).thenReturn(settlingMeeting(hostId = 1L))
+
+            val ex = assertThrows<com.manna.common.exception.MannaException> {
+                meetingFacade.markDone(1L, 2L)
+            }
+            assertThat(ex.errorCode).isEqualTo(com.manna.common.exception.ErrorCode.NOT_MEETING_HOST)
+        }
+
+        @Test
+        fun `SETTLING 아닌 상태에서 종료 시 MEETING_NOT_SETTLING 예외`() {
+            whenever(meetingDomainService.getById(1L)).thenReturn(meeting(id = 1L, hostId = 1L)) // OPEN
+
+            val ex = assertThrows<com.manna.common.exception.MannaException> {
+                meetingFacade.markDone(1L, 1L)
+            }
+            assertThat(ex.errorCode).isEqualTo(com.manna.common.exception.ErrorCode.MEETING_NOT_SETTLING)
+        }
+
+        @Test
+        fun `미완료 정산이 있으면 SETTLEMENT_INCOMPLETE 예외`() {
+            whenever(meetingDomainService.getById(1L)).thenReturn(settlingMeeting())
+            whenever(settlementService.isAllSettlementsCompleted(1L)).thenReturn(false)
+
+            val ex = assertThrows<com.manna.common.exception.MannaException> {
+                meetingFacade.markDone(1L, 1L)
+            }
+            assertThat(ex.errorCode).isEqualTo(com.manna.common.exception.ErrorCode.SETTLEMENT_INCOMPLETE)
         }
     }
 

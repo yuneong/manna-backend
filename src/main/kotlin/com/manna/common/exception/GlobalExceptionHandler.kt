@@ -1,5 +1,6 @@
 package com.manna.common.exception
 
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -8,6 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+
+    private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(MannaException::class)
     fun handleMannaException(e: MannaException): ResponseEntity<ErrorResponse> =
@@ -24,10 +27,12 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception::class)
-    fun handleException(e: Exception): ResponseEntity<ErrorResponse> =
-        ResponseEntity
+    fun handleException(e: Exception): ResponseEntity<ErrorResponse> {
+        log.error("Unhandled exception: ${e::class.simpleName} - ${e.message}", e)
+        return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ErrorResponse(status = 500, message = "서버 내부 오류가 발생했습니다"))
+    }
 }
 
 data class ErrorResponse(

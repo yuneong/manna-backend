@@ -11,7 +11,7 @@ meetings
 ├── date_range_start  DATE NOT NULL
 ├── date_range_end    DATE NOT NULL
 ├── confirmed_date    DATE (nullable)
-├── status            ENUM(OPEN, CONFIRMED, CANCELLED) NOT NULL
+├── status            ENUM(OPEN, CONFIRMED, PLACE_VOTING, SETTLING, DONE, CANCELLED) NOT NULL
 └── created_at        DATETIME NOT NULL
 
 meeting_participants
@@ -120,18 +120,25 @@ meeting/
 | `OPEN` | 날짜 조율 진행 중 | 초기값 / 확정 취소 |
 | `CONFIRMED` | 날짜 확정 완료 | POST /confirm |
 | `PLACE_VOTING` | 장소 투표 진행 중 | 첫 장소 제안 |
-| `SETTLING` | 정산 진행 중 | POST /settlement (미구현) |
+| `SETTLING` | 정산 진행 중 | 첫 정산 생성 (POST /settlements) |
+| `DONE` | 약속 종료 | PATCH /done |
 | `CANCELLED` | 약속 취소 | — |
 
 ### 상태 전환 규칙
 
 ```
-OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→ PLACE_VOTING ──[정산 생성]──→ SETTLING
+OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→ PLACE_VOTING ──[정산 생성]──→ SETTLING ──[전체 정산 완료]──→ DONE
  ↑                        │                              │                              │
  └────────────────────────┴──[확정 취소]─────────────────┴──────────────────────────────┘
 ```
 
 `cancelConfirm` 허용 상태: `CONFIRMED`, `PLACE_VOTING`, `SETTLING`
+
+> **DB 마이그레이션**: MySQL ENUM 컬럼이므로 새 값 추가 시 직접 ALTER가 필요합니다.
+> ```sql
+> ALTER TABLE meetings
+> MODIFY COLUMN status ENUM('OPEN','CONFIRMED','PLACE_VOTING','SETTLING','DONE','CANCELLED') NOT NULL;
+> ```
 
 ## RevoteStatus
 
@@ -149,9 +156,9 @@ OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→
 | 메서드 | 규칙 |
 |---|---|
 | `confirmDate(userId, date)` | 방장 여부 → `NOT_MEETING_HOST` / CANCELLED 상태 → `MEETING_NOT_OPEN` / 날짜 범위 → `DATE_OUT_OF_RANGE` (OPEN·CONFIRMED 모두 가능) |
-| `cancelConfirm(userId)` | 방장 여부 → `NOT_MEETING_HOST` / CONFIRMED 아니면 → `MEETING_NOT_CONFIRMED` / confirmedDate=null, status=OPEN |
-| `update(userId, title, description, dateRangeStart, dateRangeEnd)` | 방장 여부 → `NOT_MEETING_HOST` / 날짜 범위 변경 시 confirmedDate=null, status=OPEN 초기화 / 반환값(Boolean): 날짜 범위 변경 여부 |
 | `cancelConfirm(userId)` | 방장 여부 → `NOT_MEETING_HOST` / CONFIRMED·PLACE_VOTING·SETTLING 아니면 → `MEETING_NOT_CONFIRMED` / confirmedDate=null, status=OPEN |
+| `update(userId, title, description, dateRangeStart, dateRangeEnd)` | 방장 여부 → `NOT_MEETING_HOST` / 날짜 범위 변경 시 confirmedDate=null, status=OPEN 초기화 / 반환값(Boolean): 날짜 범위 변경 여부 |
+| `markDone(userId)` | 방장 여부 → `NOT_MEETING_HOST` / SETTLING 아니면 → `MEETING_NOT_SETTLING` / status=DONE |
 | `requireOpen()` | OPEN이 아니면 `MEETING_NOT_OPEN` |
 | `isHost(userId)` | `hostId == userId` |
 
@@ -166,10 +173,15 @@ OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→
 | `updateSchedule()` | CONFIRMED 상태 → `MEETING_ALREADY_CONFIRMED` / 기존 날짜 전체 삭제 후 신규 등록(replace), 날짜 범위 검증 |
 | `confirmDate()` | Meeting 엔티티의 `confirmDate()` 위임 (OPEN·CONFIRMED 모두 허용) |
 | `cancelConfirm()` | Meeting 엔티티의 `cancelConfirm()` 위임 |
+| `markDone(meetingId, userId)` | Meeting 엔티티의 `markDone()` 위임 / status=DONE으로 저장 |
 | `getScheduleHeatmap()` | `{ "날짜": [userId, ...] }` 형태로 집계 (날짜별 가능한 userId 목록) |
 | `getMySchedules()` | 특정 미팅에서 본인이 선택한 약속 날짜 목록 반환 |
 | `getParticipantCount()` | 약속방 참여자 수 반환 |
 | `isParticipant()` | 특정 사용자의 참여 여부 반환 |
+
+### MeetingFacade.markDone
+
+방장 확인 → SETTLING 상태 확인 → `settlementService.isAllSettlementsCompleted()` 확인 → `meetingDomainService.markDone()` 호출
 
 ### MeetingFacade.deleteMeeting 삭제 순서
 
@@ -446,6 +458,21 @@ OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→
 
 **오류**
 - `MEETING_ALREADY_CONFIRMED` — CONFIRMED 상태 약속방 (방장·참여자 모두 400)
+
+---
+
+### PATCH /api/v1/meetings/{meetingId}/done
+
+약속 종료 (방장 전용) — 모든 정산 완료 후 약속 상태를 DONE으로 변경
+
+**사전 조건**: `status = SETTLING` + 모든 정산이 `COMPLETED` 상태
+
+**Response** `200 OK` — MeetingResponse (`status: "DONE"`)
+
+**오류**
+- `NOT_MEETING_HOST` — 방장이 아닌 사용자
+- `MEETING_NOT_SETTLING` — SETTLING 상태가 아님
+- `SETTLEMENT_INCOMPLETE` — 완료되지 않은 정산이 있음
 
 ---
 

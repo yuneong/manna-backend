@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -129,6 +130,17 @@ class MeetingController(private val meetingFacade: MeetingFacade) {
     ): ResponseEntity<HeatmapResponse> {
         val info = meetingFacade.getHeatmap(meetingId)
         return ResponseEntity.ok(HeatmapResponse.from(info))
+    }
+
+    @Operation(summary = "약속 종료 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])
+    @ApiResponse(responseCode = "200", description = "약속 종료 성공 — status DONE으로 변경. SETTLING 상태이고 모든 정산 완료 시에만 가능")
+    @PatchMapping("/{meetingId}/done")
+    fun markDone(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable meetingId: Long,
+    ): ResponseEntity<MeetingResponse> {
+        val info = meetingFacade.markDone(meetingId, userId)
+        return ResponseEntity.ok(MeetingResponse.from(info))
     }
 
     @Operation(summary = "날짜 확정 취소 (방장 전용)", security = [SecurityRequirement(name = "Bearer Authentication")])

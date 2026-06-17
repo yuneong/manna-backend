@@ -27,6 +27,8 @@ class SettlementService(
         val meeting = meetingRepository.findById(command.meetingId)
             ?: throw MannaException(ErrorCode.MEETING_NOT_FOUND)
 
+        if (!meeting.status.isSettlementAddable()) throw MannaException(ErrorCode.MEETING_SETTLEMENT_NOT_ADDABLE)
+
         if (meetingRepository.findParticipantByMeetingIdAndUserId(command.meetingId, command.creatorId) == null) {
             throw MannaException(ErrorCode.NOT_MEETING_PARTICIPANT)
         }
@@ -144,4 +146,9 @@ class SettlementService(
 
     fun getParticipantsBySettlementIds(settlementIds: List<Long>): List<SettlementParticipant> =
         settlementRepository.findParticipantsBySettlementIds(settlementIds)
+
+    fun isAllSettlementsCompleted(meetingId: Long): Boolean {
+        val settlements = settlementRepository.findByMeetingId(meetingId)
+        return settlements.isNotEmpty() && settlements.all { it.status == SettlementStatus.COMPLETED }
+    }
 }

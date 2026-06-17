@@ -11,9 +11,11 @@ import com.manna.meeting.application.command.UpdateScheduleCommand
 import com.manna.meeting.application.info.MeetingInfo
 import com.manna.meeting.application.info.ParticipantInfo
 import com.manna.meeting.application.info.ScheduleHeatmapInfo
+import com.manna.meeting.domain.entity.MeetingStatus
 import com.manna.meeting.domain.service.MeetingDomainService
 import com.manna.meeting.domain.service.RevoteDomainService
 import com.manna.place.domain.service.PlaceService
+import com.manna.settlement.domain.service.SettlementService
 import com.manna.user.domain.service.UserDomainService
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -23,6 +25,7 @@ class MeetingFacade(
     private val meetingDomainService: MeetingDomainService,
     private val revoteDomainService: RevoteDomainService,
     private val placeService: PlaceService,
+    private val settlementService: SettlementService,
     private val userDomainService: UserDomainService,
 ) {
 
@@ -48,6 +51,17 @@ class MeetingFacade(
         val participants = resolveParticipants(meetingIds)
         val responseCount = resolveResponseCounts(meetingIds)[meeting.id] ?: 0
         return MeetingInfo.from(meeting, participants[meeting.id] ?: emptyList(), responseCount)
+    }
+
+    fun markDone(meetingId: Long, userId: Long): MeetingInfo {
+        val meeting = meetingDomainService.getById(meetingId)
+        if (!meeting.isHost(userId)) throw MannaException(ErrorCode.NOT_MEETING_HOST)
+        if (meeting.status != MeetingStatus.SETTLING) throw MannaException(ErrorCode.MEETING_NOT_SETTLING)
+        if (!settlementService.isAllSettlementsCompleted(meetingId)) throw MannaException(ErrorCode.SETTLEMENT_INCOMPLETE)
+        val updatedMeeting = meetingDomainService.markDone(meetingId, userId)
+        val participants = resolveParticipants(listOf(meetingId))
+        val responseCount = resolveResponseCounts(listOf(meetingId))[meetingId] ?: 0
+        return MeetingInfo.from(updatedMeeting, participants[meetingId] ?: emptyList(), responseCount)
     }
 
     @Transactional

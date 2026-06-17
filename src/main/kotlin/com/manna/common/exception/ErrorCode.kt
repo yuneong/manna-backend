@@ -39,4 +39,7 @@ enum class ErrorCode(
     SETTLEMENT_NOT_CREATOR(HttpStatus.FORBIDDEN, "정산 수금자만 가능한 작업입니다"),
     SETTLEMENT_NOT_PARTICIPANT(HttpStatus.FORBIDDEN, "정산 대상자가 아닙니다"),
     SETTLEMENT_NOT_ALL_PAID(HttpStatus.BAD_REQUEST, "아직 모든 참여자가 납부를 완료하지 않았습니다"),
+    SETTLEMENT_INCOMPLETE(HttpStatus.BAD_REQUEST, "완료되지 않은 정산이 있어요"),
+    MEETING_NOT_SETTLING(HttpStatus.BAD_REQUEST, "정산 중 상태에서만 종료할 수 있어요"),
+    MEETING_SETTLEMENT_NOT_ADDABLE(HttpStatus.BAD_REQUEST, "종료된 약속에는 정산을 추가할 수 없어요"),
 }

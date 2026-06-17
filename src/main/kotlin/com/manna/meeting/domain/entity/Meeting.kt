@@ -73,6 +73,12 @@ class Meeting(
         return dateRangeChanged
     }
 
+    fun markDone(userId: Long) {
+        if (!isHost(userId)) throw MannaException(ErrorCode.NOT_MEETING_HOST)
+        if (status != MeetingStatus.SETTLING) throw MannaException(ErrorCode.MEETING_NOT_SETTLING)
+        status = MeetingStatus.DONE
+    }
+
     fun isHost(userId: Long) = hostId == userId
 
     fun requireOpen() {

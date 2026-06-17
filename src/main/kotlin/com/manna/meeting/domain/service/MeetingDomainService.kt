@@ -93,6 +93,13 @@ class MeetingDomainService(private val meetingRepository: MeetingRepository) {
         return meetingRepository.save(meeting)
     }
 
+    @Transactional
+    fun markDone(meetingId: Long, userId: Long): Meeting {
+        val meeting = getById(meetingId)
+        meeting.markDone(userId)
+        return meetingRepository.save(meeting)
+    }
+
     fun getById(id: Long): Meeting =
         meetingRepository.findById(id) ?: throw MannaException(ErrorCode.MEETING_NOT_FOUND)
 
