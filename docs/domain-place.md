@@ -61,7 +61,7 @@ place/
 
 | 메서드 | 규칙 |
 |---|---|
-| `propose()` | MEETING_NOT_FOUND / status가 CONFIRMED·PLACE_VOTING 아님 → `MEETING_NOT_CONFIRMED` / 참여자 아님 → `NOT_MEETING_PARTICIPANT` / status == CONFIRMED이면 제안 후 PLACE_VOTING으로 전환 |
+| `propose()` | MEETING_NOT_FOUND / status가 CONFIRMED·PLACE_VOTING 아님 → `MEETING_NOT_CONFIRMED` / 참여자 아님 → `NOT_MEETING_PARTICIPANT` / status == CONFIRMED이면 제안 후 PLACE_VOTING으로 전환 (이미 PLACE_VOTING이면 상태 변경 없음) |
 | `toggleVote()` | 참여자 아님 → `NOT_MEETING_PARTICIPANT` / 장소 없음 → `PLACE_NOT_FOUND` / 다른 약속방 장소 → `PLACE_NOT_FOUND` / 기존 투표 있으면 DELETE, 없으면 INSERT |
 | `getPlaces()` | 약속방의 모든 장소 반환 |
 | `getVotesByPlaceIds()` | 장소 ID 목록의 모든 투표 반환, 빈 리스트면 early return |
@@ -94,7 +94,12 @@ place/
       "memo": "1인당 4-5만원",
       "proposer": { "id": 1, "nickname": "민지" },
       "voteCount": 4,
-      "voters": ["민지", "지원", "현우", "예린"],
+      "voters": [
+        { "id": 1, "nickname": "민지", "profileImageUrl": null },
+        { "id": 2, "nickname": "지원", "profileImageUrl": "https://..." },
+        { "id": 3, "nickname": "현우", "profileImageUrl": null },
+        { "id": 4, "nickname": "예린", "profileImageUrl": null }
+      ],
       "myVoted": true
     }
   ],
@@ -106,7 +111,7 @@ place/
 
 ### POST /api/v1/meetings/{meetingId}/places
 
-장소 제안 (참여자 전용) — meeting.status = CONFIRMED 필요
+장소 제안 (참여자 전용) — meeting.status = CONFIRMED 또는 PLACE_VOTING 필요
 
 **Request**
 ```json
@@ -121,7 +126,7 @@ place/
 
 **오류**
 - `NOT_MEETING_PARTICIPANT` — 참여자가 아닌 사용자 (403)
-- `MEETING_NOT_CONFIRMED` — 약속방이 CONFIRMED 상태가 아님 (400)
+- `MEETING_NOT_CONFIRMED` — CONFIRMED 또는 PLACE_VOTING 상태가 아님 (400)
 
 ---
 

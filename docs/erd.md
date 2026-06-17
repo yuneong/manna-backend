@@ -15,17 +15,25 @@ meetings ──────────────── meeting_participants
     │                           │
     │                     user_id (FK 없음)
     │
-    └──────────────────── revotes
+    ├──────────────────── revotes
+    │                          │
+    │                          ├── revote_candidates
+    │                          │
+    │                          └── revote_votes
+    │                                   │
+    │                              user_id (FK → users)
+    │
+    └──────────────────── settlements
                                │
-                               ├── revote_candidates
+                               ├── settlement_participants
                                │
-                               └── revote_votes
+                               └── settlement_items
                                         │
-                                   user_id (FK → users)
+                                   settlement_item_participants
 ```
 
-> `host_id`, `meeting_participants.user_id`, `meeting_schedules.user_id`, `revote_votes.user_id`는 물리적 FK를 걸지 않습니다 (User 도메인 분리 원칙).
-> `revote_candidates`, `revote_votes`는 `revotes`에 물리적 FK를 가집니다.
+> `host_id`, `meeting_participants.user_id`, `meeting_schedules.user_id`, `revote_votes.user_id`, `settlement_participants.user_id`, `settlement_item_participants.user_id`는 물리적 FK를 걸지 않습니다 (User 도메인 분리 원칙).
+> `revote_candidates`, `revote_votes`는 `revotes`에, settlement 하위 테이블들은 `settlements`/`settlement_items`에 물리적 FK를 가집니다.
 > 참조 무결성은 애플리케이션 레이어에서 보장합니다.
 
 ---
@@ -69,7 +77,7 @@ CREATE TABLE meetings
     date_range_start DATE                              NOT NULL,
     date_range_end   DATE                              NOT NULL,
     confirmed_date   DATE,
-    status           ENUM ('OPEN','CONFIRMED','CANCELLED') NOT NULL DEFAULT 'OPEN',
+    status           ENUM ('OPEN','CONFIRMED','PLACE_VOTING','SETTLING','DONE','CANCELLED') NOT NULL DEFAULT 'OPEN',
     created_at       DATETIME(6)                       NOT NULL,
     PRIMARY KEY (id),
     INDEX idx_meetings_host_id (host_id),
@@ -170,6 +178,83 @@ CREATE TABLE revote_votes
   COLLATE = utf8mb4_unicode_ci;
 ```
 
+### settlements
+
+```sql
+CREATE TABLE settlements
+(
+    id             BIGINT       NOT NULL AUTO_INCREMENT,
+    meeting_id     BIGINT       NOT NULL,
+    creator_id     BIGINT       NOT NULL,
+    title          VARCHAR(255) NOT NULL,
+    type           VARCHAR(20)  NOT NULL,
+    total_amount   INT,
+    bank_name      VARCHAR(100) NOT NULL,
+    account_number VARCHAR(100) NOT NULL,
+    account_holder VARCHAR(100) NOT NULL,
+    status         VARCHAR(20)  NOT NULL DEFAULT 'IN_PROGRESS',
+    created_at     DATETIME(6)  NOT NULL,
+    PRIMARY KEY (id),
+    INDEX idx_settlements_meeting_id (meeting_id),
+    CONSTRAINT fk_settlements_meeting
+        FOREIGN KEY (meeting_id) REFERENCES meetings (id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+```
+
+### settlement_participants
+
+```sql
+CREATE TABLE settlement_participants
+(
+    id            BIGINT  NOT NULL AUTO_INCREMENT,
+    settlement_id BIGINT  NOT NULL,
+    user_id       BIGINT  NOT NULL,
+    amount        INT     NOT NULL,
+    is_paid       BOOLEAN NOT NULL DEFAULT false,
+    PRIMARY KEY (id),
+    INDEX idx_settlement_participants_settlement_id (settlement_id),
+    CONSTRAINT fk_settlement_participants_settlement
+        FOREIGN KEY (settlement_id) REFERENCES settlements (id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+```
+
+### settlement_items
+
+```sql
+CREATE TABLE settlement_items
+(
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    settlement_id BIGINT       NOT NULL,
+    name          VARCHAR(255) NOT NULL,
+    amount        INT          NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_settlement_items_settlement
+        FOREIGN KEY (settlement_id) REFERENCES settlements (id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+```
+
+### settlement_item_participants
+
+```sql
+CREATE TABLE settlement_item_participants
+(
+    id                 BIGINT NOT NULL AUTO_INCREMENT,
+    settlement_item_id BIGINT NOT NULL,
+    user_id            BIGINT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_settlement_item_participants_item
+        FOREIGN KEY (settlement_item_id) REFERENCES settlement_items (id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+```
+
 ---
 
 ## 인덱스 설계
@@ -186,6 +271,8 @@ CREATE TABLE revote_votes
 | `meeting_schedules` | `idx_meeting_schedules_meeting_id` | 약속방 기준 약속 날짜 조회 |
 | `revotes` | `idx_revotes_meeting_id` | 약속방 기준 재투표 조회 |
 | `revote_votes` | `uq_revote_user` (UNIQUE) | 중복 투표 방지 |
+| `settlements` | `idx_settlements_meeting_id` | 약속방 기준 정산 조회 |
+| `settlement_participants` | `idx_settlement_participants_settlement_id` | 정산 기준 참여자 조회 |
 
 ---
 
@@ -211,3 +298,6 @@ CREATE TABLE revote_votes
 | v1.1.0 | 2026-05-21 | availability → meeting_schedules 테이블 rename, available_date → scheduled_date |
 | v1.2.0 | 2026-05-22 | 재투표 기능 추가 — revotes, revote_candidates, revote_votes |
 | v1.3.0 | 2026-05-26 | 소셜 로그인 — users 테이블에 provider, kakao_id, google_id 컬럼 추가 |
+| v1.4.0 | 2026-06-04 | 장소 투표 — places, place_votes 테이블 추가 |
+| v1.5.0 | 2026-06-08 | 정산 — settlements, settlement_participants, settlement_items, settlement_item_participants 테이블 추가 |
+| v1.6.0 | 2026-06-17 | meetings.status ENUM에 PLACE_VOTING, SETTLING, DONE 추가 (ALTER TABLE 필요) |

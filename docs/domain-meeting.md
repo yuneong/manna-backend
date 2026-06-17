@@ -252,8 +252,9 @@ OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→
   "participantCount": 1,
   "responseCount": 0,
   "participants": [
-    { "id": 1, "nickname": "홍길동" }
-  ]
+    { "id": 1, "nickname": "홍길동", "profileImageUrl": null }
+  ],
+  "hasRevote": false
 }
 ```
 
@@ -278,16 +279,18 @@ OPEN ──[날짜 확정]──→ CONFIRMED ──[첫 장소 제안]──→
   "participantCount": 3,
   "responseCount": 2,
   "participants": [
-    { "id": 1, "nickname": "홍길동" },
-    { "id": 2, "nickname": "김철수" },
-    { "id": 3, "nickname": "이영희" }
+    { "id": 1, "nickname": "홍길동", "profileImageUrl": null },
+    { "id": 2, "nickname": "김철수", "profileImageUrl": "https://..." },
+    { "id": 3, "nickname": "이영희", "profileImageUrl": null }
   ],
-  "isParticipant": true
+  "isParticipant": true,
+  "hasRevote": false
 }
 ```
 
 > - `isParticipant`: 단건 조회에만 포함됩니다. 목록 조회(`/my`)에는 포함되지 않습니다.
 > - `responseCount`: 약속 날짜(schedule)를 1개 이상 등록한 참여자 수 (distinct userId 기준).
+> - `hasRevote`: 현재 OPEN 상태의 재투표가 존재하면 `true`. 단건/목록 모두 포함.
 
 ---
 

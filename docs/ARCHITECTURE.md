@@ -96,61 +96,123 @@ src/main/kotlin/com/manna/
 │           ├── LoginRequest.kt
 │           ├── TokenResponse.kt
 │           └── UserResponse.kt
-└── meeting/
+├── meeting/
+│   ├── domain/
+│   │   ├── entity/
+│   │   │   ├── Meeting.kt
+│   │   │   ├── MeetingParticipant.kt
+│   │   │   ├── MeetingSchedule.kt
+│   │   │   ├── MeetingStatus.kt
+│   │   │   ├── Revote.kt
+│   │   │   ├── RevoteCandidate.kt
+│   │   │   ├── RevoteVote.kt
+│   │   │   └── RevoteStatus.kt
+│   │   ├── repository/
+│   │   │   ├── MeetingRepository.kt           ← interface (domain boundary)
+│   │   │   └── RevoteRepository.kt
+│   │   └── service/
+│   │       ├── MeetingDomainService.kt
+│   │       └── RevoteDomainService.kt
+│   ├── application/
+│   │   ├── command/
+│   │   │   ├── CreateMeetingCommand.kt
+│   │   │   ├── UpdateMeetingCommand.kt
+│   │   │   ├── JoinMeetingCommand.kt
+│   │   │   ├── UpdateScheduleCommand.kt
+│   │   │   ├── ConfirmDateCommand.kt
+│   │   │   ├── CancelConfirmCommand.kt
+│   │   │   ├── CreateRevoteCommand.kt
+│   │   │   ├── VoteRevoteCommand.kt
+│   │   │   └── ConfirmRevoteCommand.kt
+│   │   ├── info/
+│   │   │   ├── MeetingInfo.kt
+│   │   │   ├── ScheduleHeatmapInfo.kt
+│   │   │   └── RevoteInfo.kt
+│   │   └── facade/
+│   │       ├── MeetingFacade.kt
+│   │       └── RevoteFacade.kt
+│   ├── infrastructure/
+│   │   ├── jpa/
+│   │   │   ├── MeetingJpaRepository.kt
+│   │   │   └── RevoteJpaRepository.kt
+│   │   └── repository/
+│   │       ├── MeetingRepositoryImpl.kt
+│   │       └── RevoteRepositoryImpl.kt
+│   └── interfaces/
+│       ├── controller/
+│       │   ├── MeetingController.kt
+│       │   └── RevoteController.kt
+│       └── dto/
+│           ├── CreateMeetingRequest.kt
+│           ├── UpdateMeetingRequest.kt
+│           ├── UpdateScheduleRequest.kt
+│           ├── ConfirmDateRequest.kt
+│           ├── MeetingResponse.kt
+│           ├── MyScheduleResponse.kt
+│           ├── HeatmapResponse.kt
+│           ├── CreateRevoteRequest.kt
+│           ├── VoteRevoteRequest.kt
+│           ├── ConfirmRevoteRequest.kt
+│           └── RevoteResponse.kt
+├── place/
+│   ├── domain/
+│   │   ├── entity/
+│   │   │   ├── Place.kt
+│   │   │   └── PlaceVote.kt
+│   │   ├── repository/
+│   │   │   └── PlaceRepository.kt
+│   │   └── service/
+│   │       └── PlaceService.kt
+│   ├── application/
+│   │   ├── command/
+│   │   │   └── CreatePlaceCommand.kt
+│   │   ├── info/
+│   │   │   └── PlaceInfo.kt                   ← ProposerInfo, VoterInfo, PlaceInfo, PlacesInfo
+│   │   └── facade/
+│   │       └── PlaceFacade.kt
+│   ├── infrastructure/
+│   │   ├── jpa/
+│   │   │   └── PlaceJpaRepository.kt
+│   │   └── repository/
+│   │       └── PlaceRepositoryImpl.kt
+│   └── interfaces/
+│       ├── controller/
+│       │   └── PlaceController.kt
+│       └── dto/
+│           ├── CreatePlaceRequest.kt
+│           └── PlaceResponse.kt               ← ProposerResponse, VoterResponse, PlaceResponse, PlacesResponse
+└── settlement/
     ├── domain/
     │   ├── entity/
-    │   │   ├── Meeting.kt
-    │   │   ├── MeetingParticipant.kt
-    │   │   ├── MeetingSchedule.kt
-    │   │   ├── MeetingStatus.kt
-    │   │   ├── Revote.kt
-    │   │   ├── RevoteCandidate.kt
-    │   │   ├── RevoteVote.kt
-    │   │   └── RevoteStatus.kt
+    │   │   ├── Settlement.kt
+    │   │   ├── SettlementParticipant.kt
+    │   │   ├── SettlementItem.kt
+    │   │   ├── SettlementItemParticipant.kt
+    │   │   ├── SettlementType.kt
+    │   │   └── SettlementStatus.kt
     │   ├── repository/
-    │   │   ├── MeetingRepository.kt           ← interface (domain boundary)
-    │   │   └── RevoteRepository.kt
+    │   │   └── SettlementRepository.kt
     │   └── service/
-    │       ├── MeetingDomainService.kt
-    │       └── RevoteDomainService.kt
+    │       └── SettlementService.kt
     ├── application/
     │   ├── command/
-    │   │   ├── CreateMeetingCommand.kt
-    │   │   ├── JoinMeetingCommand.kt
-    │   │   ├── UpdateScheduleCommand.kt
-    │   │   ├── ConfirmDateCommand.kt
-    │   │   ├── CreateRevoteCommand.kt
-    │   │   ├── VoteRevoteCommand.kt
-    │   │   └── ConfirmRevoteCommand.kt
+    │   │   └── CreateSettlementCommand.kt     ← CreateSettlementItemCommand 포함
     │   ├── info/
-    │   │   ├── MeetingInfo.kt
-    │   │   ├── ScheduleHeatmapInfo.kt
-    │   │   └── RevoteInfo.kt
+    │   │   └── SettlementInfo.kt              ← SettlementCreatorInfo, SettlementParticipantInfo, SettlementItemInfo 포함
     │   └── facade/
-    │       ├── MeetingFacade.kt
-    │       └── RevoteFacade.kt
+    │       └── SettlementFacade.kt
     ├── infrastructure/
     │   ├── jpa/
-    │   │   ├── MeetingJpaRepository.kt
-    │   │   └── RevoteJpaRepository.kt
+    │   │   └── SettlementJpaRepository.kt     ← 4개의 JPA 레포지토리
     │   └── repository/
-    │       ├── MeetingRepositoryImpl.kt
-    │       └── RevoteRepositoryImpl.kt
+    │       └── SettlementRepositoryImpl.kt
     └── interfaces/
         ├── controller/
-        │   ├── MeetingController.kt
-        │   └── RevoteController.kt
+        │   └── SettlementController.kt
         └── dto/
-            ├── CreateMeetingRequest.kt
-            ├── UpdateScheduleRequest.kt
-            ├── ConfirmDateRequest.kt
-            ├── MeetingResponse.kt
-            ├── MyScheduleResponse.kt
-            ├── HeatmapResponse.kt
-            ├── CreateRevoteRequest.kt
-            ├── VoteRevoteRequest.kt
-            ├── ConfirmRevoteRequest.kt
-            └── RevoteResponse.kt
+            ├── CreateSettlementRequest.kt     ← CreateSettlementItemRequest 포함
+            ├── SettlementResponse.kt          ← SettlementCreatorDto, SettlementParticipantDto, SettlementItemDto 포함
+            └── SettlementListResponse.kt
 ```
 
 ---
@@ -207,13 +269,23 @@ validateToken(token: String): Boolean // 유효성 검사
 | `NOT_MEETING_PARTICIPANT` | 403 | 약속방 참여자만 가능한 작업입니다 |
 | `ALREADY_JOINED` | 409 | 이미 참여한 약속방입니다 |
 | `MEETING_NOT_OPEN` | 400 | 진행 중인 약속방이 아닙니다 |
+| `MEETING_NOT_CONFIRMED` | 400 | 확정된 약속방이 아닙니다 |
+| `MEETING_ALREADY_CONFIRMED` | 400 | 이미 확정된 약속방입니다 |
 | `DATE_OUT_OF_RANGE` | 400 | 약속방 날짜 범위를 벗어난 날짜입니다 |
+| `PLACE_NOT_FOUND` | 404 | 장소를 찾을 수 없습니다 |
 | `REVOTE_NOT_FOUND` | 404 | 진행 중인 재투표가 없습니다 |
 | `REVOTE_ALREADY_EXISTS` | 400 | 이미 진행 중인 재투표가 있습니다 |
 | `REVOTE_ALREADY_VOTED` | 409 | 이미 투표하였습니다 |
 | `REVOTE_INVALID_CANDIDATE_DATE` | 400 | 유효하지 않은 후보 날짜입니다 |
 | `REVOTE_NOT_COMPLETED` | 400 | 아직 전원 투표가 완료되지 않았습니다 |
 | `REVOTE_IN_PROGRESS` | 400 | 재투표가 진행 중입니다 |
+| `SETTLEMENT_NOT_FOUND` | 404 | 정산을 찾을 수 없습니다 |
+| `SETTLEMENT_NOT_CREATOR` | 403 | 정산 수금자만 가능한 작업입니다 |
+| `SETTLEMENT_NOT_PARTICIPANT` | 403 | 정산 대상자가 아닙니다 |
+| `SETTLEMENT_NOT_ALL_PAID` | 400 | 아직 모든 참여자가 납부를 완료하지 않았습니다 |
+| `SETTLEMENT_INCOMPLETE` | 400 | 완료되지 않은 정산이 있어요 |
+| `MEETING_NOT_SETTLING` | 400 | 정산 중 상태에서만 종료할 수 있어요 |
+| `MEETING_SETTLEMENT_NOT_ADDABLE` | 400 | 종료된 약속에는 정산을 추가할 수 없어요 |
 
 ---
 
@@ -222,8 +294,10 @@ validateToken(token: String): Boolean // 유효성 검사
 | 문서 | 내용 |
 |---|---|
 | [erd.md](erd.md) | 전체 테이블 DDL, 인덱스 설계, 변경 이력 |
-| [domain-user.md](domain-user.md) | User 도메인 ERD, API, 레이어 흐름 |
+| [domain-user.md](domain-user.md) | User 도메인 ERD, API, 레이어 흐름 (소셜 로그인 포함) |
 | [domain-meeting.md](domain-meeting.md) | Meeting 도메인 ERD, API, 레이어 흐름 |
+| [domain-place.md](domain-place.md) | Place 도메인 ERD, API |
+| [domain-settlement.md](domain-settlement.md) | Settlement 도메인 ERD, API, 금액 계산 규칙 |
 | [swagger.md](swagger.md) | Swagger UI 접속 및 JWT 인증 사용법 |
 | [frontend-guide.md](frontend-guide.md) | 프론트엔드 API 연동 가이드 |
 
@@ -358,6 +432,4 @@ SPRING_PROFILES_ACTIVE=prod java -jar manna.jar
 
 | 항목 | 내용 |
 |---|---|
-| 장소 결정 | `place` 도메인 추가 (후보 장소 투표) |
-| 정산 | `settlement` 도메인 추가 |
 | Refresh Token | `TokenInfo`에 `refreshToken` 필드 추가, Redis 저장 |
