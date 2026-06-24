@@ -86,7 +86,7 @@ class SettlementService(
             }
         }
 
-        if (meeting.status == MeetingStatus.PLACE_VOTING) {
+        if (meeting.status == MeetingStatus.CONFIRMED || meeting.status == MeetingStatus.PLACE_VOTING) {
             meeting.status = MeetingStatus.SETTLING
             meetingRepository.save(meeting)
         }
