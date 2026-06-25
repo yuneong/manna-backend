@@ -75,7 +75,7 @@ class SettlementServiceTest {
         meetingId: Long = 1L,
         creatorId: Long = 1L,
         totalAmount: Int = 10000,
-        participantUserIds: List<Long> = listOf(2L, 3L),
+        participantUserIds: List<Long> = listOf(1L, 2L, 3L),
     ) = CreateSettlementCommand(
         meetingId = meetingId,
         creatorId = creatorId,
@@ -110,10 +110,10 @@ class SettlementServiceTest {
     inner class Create {
 
         @Test
-        fun `TOTAL 방식 생성 성공 — 1인당 금액 계산 및 PLACE_VOTING에서 SETTLING으로 전이`() {
+        fun `TOTAL 방식 생성 성공 — creator 나머지 흡수, isPaid=true, PLACE_VOTING에서 SETTLING으로 전이`() {
             val m = meeting(status = MeetingStatus.PLACE_VOTING)
             val s = settlement(meeting = m)
-            val command = totalCommand(totalAmount = 10000, participantUserIds = listOf(2L, 3L))
+            val command = totalCommand(totalAmount = 10000, participantUserIds = listOf(1L, 2L, 3L))
 
             whenever(meetingRepository.findById(1L)).thenReturn(m)
             whenever(meetingRepository.findParticipantByMeetingIdAndUserId(1L, 1L))
@@ -127,10 +127,41 @@ class SettlementServiceTest {
             settlementService.create(command)
 
             val captor = argumentCaptor<SettlementParticipant>()
-            verify(settlementRepository, times(2)).saveParticipant(captor.capture())
-            assertThat(captor.allValues.map { it.amount }).containsOnly(5000)
+            verify(settlementRepository, times(3)).saveParticipant(captor.capture())
+            val saved = captor.allValues.associateBy { it.userId }
+            assertThat(saved[1L]!!.amount).isEqualTo(3334)   // creator: base 3333 + remainder 1
+            assertThat(saved[1L]!!.isPaid).isTrue()
+            assertThat(saved[2L]!!.amount).isEqualTo(3333)
+            assertThat(saved[2L]!!.isPaid).isFalse()
+            assertThat(saved[3L]!!.amount).isEqualTo(3333)
             assertThat(m.status).isEqualTo(MeetingStatus.SETTLING)
             verify(meetingRepository).save(m)
+        }
+
+        @Test
+        fun `TOTAL 방식 — 나머지 발생 시 creator가 흡수, 합계가 totalAmount와 일치`() {
+            val m = meeting(status = MeetingStatus.SETTLING)
+            val s = settlement(meeting = m)
+            val command = totalCommand(totalAmount = 10001, participantUserIds = listOf(1L, 2L, 3L))
+
+            whenever(meetingRepository.findById(1L)).thenReturn(m)
+            whenever(meetingRepository.findParticipantByMeetingIdAndUserId(1L, 1L))
+                .thenReturn(meetingParticipant(m, 1L))
+            whenever(meetingRepository.findParticipantsByMeetingId(1L))
+                .thenReturn(listOf(meetingParticipant(m, 1L), meetingParticipant(m, 2L), meetingParticipant(m, 3L)))
+            whenever(settlementRepository.save(any())).thenReturn(s)
+            whenever(settlementRepository.saveParticipant(any())).thenAnswer { it.arguments[0] as SettlementParticipant }
+
+            settlementService.create(command)
+
+            val captor = argumentCaptor<SettlementParticipant>()
+            verify(settlementRepository, times(3)).saveParticipant(captor.capture())
+            val saved = captor.allValues.associateBy { it.userId }
+            assertThat(saved[1L]!!.amount).isEqualTo(3335)   // base 3333 + remainder 2
+            assertThat(saved[1L]!!.isPaid).isTrue()
+            assertThat(saved[2L]!!.amount).isEqualTo(3333)
+            assertThat(saved[3L]!!.amount).isEqualTo(3333)
+            assertThat(saved.values.sumOf { it.amount }).isEqualTo(10001)
         }
 
         @Test
@@ -183,6 +214,36 @@ class SettlementServiceTest {
             assertThat(amountByUser[2L]).isEqualTo(7000)
             assertThat(amountByUser[3L]).isEqualTo(7000)
             assertThat(amountByUser[4L]).isEqualTo(3000)
+        }
+
+        @Test
+        fun `ITEMIZED 방식 — creator 미포함 항목 나머지는 userId 오름차순 앞 r명이 흡수`() {
+            val m = meeting(status = MeetingStatus.SETTLING)
+            val s = settlement(meeting = m, type = SettlementType.ITEMIZED)
+            // 20002 / 3명(2,3,4) = base 6667 remainder 1 → creator(1L) 없으므로 2L이 +1원
+            val items = listOf(CreateSettlementItemCommand("식비", 20002, listOf(2L, 3L, 4L)))
+            val command = itemizedCommand(items = items)
+
+            whenever(meetingRepository.findById(1L)).thenReturn(m)
+            whenever(meetingRepository.findParticipantByMeetingIdAndUserId(1L, 1L))
+                .thenReturn(meetingParticipant(m, 1L))
+            whenever(meetingRepository.findParticipantsByMeetingId(1L))
+                .thenReturn((1L..4L).map { meetingParticipant(m, it) })
+            whenever(settlementRepository.save(any())).thenReturn(s)
+            whenever(settlementRepository.saveItem(any())).thenAnswer { it.arguments[0] as SettlementItem }
+            whenever(settlementRepository.saveItemParticipant(any())).thenAnswer { it.arguments[0] as SettlementItemParticipant }
+            whenever(settlementRepository.saveParticipant(any())).thenAnswer { it.arguments[0] as SettlementParticipant }
+
+            settlementService.create(command)
+
+            val captor = argumentCaptor<SettlementParticipant>()
+            verify(settlementRepository, times(3)).saveParticipant(captor.capture())
+            val saved = captor.allValues.associateBy { it.userId }
+            assertThat(saved[1L]).isNull()                    // creator는 참여자 없음
+            assertThat(saved[2L]!!.amount).isEqualTo(6668)   // 오름차순 앞 1명이 +1원
+            assertThat(saved[3L]!!.amount).isEqualTo(6667)
+            assertThat(saved[4L]!!.amount).isEqualTo(6667)
+            assertThat(saved.values.sumOf { it.amount }).isEqualTo(20002)
         }
 
         @Test
@@ -302,9 +363,10 @@ class SettlementServiceTest {
         @Test
         fun `납부 완료 처리 — isPaid true로 변경`() {
             val m = meeting()
-            val s = settlement(meeting = m)
+            val s = settlement(meeting = m, creatorId = 1L)
             val participant = SettlementParticipant(settlement = s, userId = 2L, amount = 5000, isPaid = false)
 
+            whenever(settlementRepository.findById(1L)).thenReturn(s)
             whenever(settlementRepository.findParticipantBySettlementIdAndUserId(1L, 2L))
                 .thenReturn(participant)
             whenever(settlementRepository.saveParticipant(any())).thenAnswer { it.arguments[0] as SettlementParticipant }
@@ -315,7 +377,22 @@ class SettlementServiceTest {
         }
 
         @Test
+        fun `creator가 본인 납부 처리 시도 — SETTLEMENT_NOT_PARTICIPANT 예외`() {
+            val m = meeting()
+            val s = settlement(meeting = m, creatorId = 1L)
+
+            whenever(settlementRepository.findById(1L)).thenReturn(s)
+
+            val ex = assertThrows<MannaException> { settlementService.markPaid(settlementId = 1L, userId = 1L) }
+            assertThat(ex.errorCode).isEqualTo(ErrorCode.SETTLEMENT_NOT_PARTICIPANT)
+        }
+
+        @Test
         fun `정산 대상자 아님 — SETTLEMENT_NOT_PARTICIPANT 예외`() {
+            val m = meeting()
+            val s = settlement(meeting = m, creatorId = 1L)
+
+            whenever(settlementRepository.findById(1L)).thenReturn(s)
             whenever(settlementRepository.findParticipantBySettlementIdAndUserId(1L, 99L)).thenReturn(null)
 
             val ex = assertThrows<MannaException> { settlementService.markPaid(1L, 99L) }

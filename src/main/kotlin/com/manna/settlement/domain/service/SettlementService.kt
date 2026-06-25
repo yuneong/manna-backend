@@ -57,10 +57,19 @@ class SettlementService(
 
         when (command.type) {
             SettlementType.TOTAL -> {
-                val perAmount = command.totalAmount!! / command.participantUserIds.size
-                command.participantUserIds.forEach { userId ->
+                val ids = command.participantUserIds
+                val total = command.totalAmount!!
+                val base = total / ids.size
+                val remainder = total % ids.size
+                ids.forEach { userId ->
+                    val isCreator = userId == command.creatorId
                     settlementRepository.saveParticipant(
-                        SettlementParticipant(settlement = settlement, userId = userId, amount = perAmount),
+                        SettlementParticipant(
+                            settlement = settlement,
+                            userId = userId,
+                            amount = if (isCreator) base + remainder else base,
+                            isPaid = isCreator,
+                        ),
                     )
                 }
             }
@@ -70,17 +79,28 @@ class SettlementService(
                     val savedItem = settlementRepository.saveItem(
                         SettlementItem(settlement = settlement, name = itemCmd.name, amount = itemCmd.amount),
                     )
-                    val perItemAmount = itemCmd.amount / itemCmd.participantUserIds.size
-                    itemCmd.participantUserIds.forEach { userId ->
+                    val ids = itemCmd.participantUserIds
+                    val base = itemCmd.amount / ids.size
+                    val remainder = itemCmd.amount % ids.size
+                    // 나머지는 creator가 이 항목에 있으면 creator가 흡수, 없으면 userId 오름차순 앞 r명이 +1원씩
+                    val extraByUser: Map<Long, Int> =
+                        if (command.creatorId in ids) mapOf(command.creatorId to remainder)
+                        else ids.sorted().take(remainder).associateWith { 1 }
+                    ids.forEach { userId ->
                         settlementRepository.saveItemParticipant(
                             SettlementItemParticipant(settlementItem = savedItem, userId = userId),
                         )
-                        amountByUser[userId] = (amountByUser[userId] ?: 0) + perItemAmount
+                        amountByUser[userId] = (amountByUser[userId] ?: 0) + base + (extraByUser[userId] ?: 0)
                     }
                 }
                 amountByUser.forEach { (userId, amount) ->
                     settlementRepository.saveParticipant(
-                        SettlementParticipant(settlement = settlement, userId = userId, amount = amount),
+                        SettlementParticipant(
+                            settlement = settlement,
+                            userId = userId,
+                            amount = amount,
+                            isPaid = userId == command.creatorId,
+                        ),
                     )
                 }
             }
@@ -113,6 +133,9 @@ class SettlementService(
 
     @Transactional
     fun markPaid(settlementId: Long, userId: Long): SettlementParticipant {
+        val settlement = settlementRepository.findById(settlementId)
+            ?: throw MannaException(ErrorCode.SETTLEMENT_NOT_FOUND)
+        if (settlement.creatorId == userId) throw MannaException(ErrorCode.SETTLEMENT_NOT_PARTICIPANT)
         val participant = settlementRepository.findParticipantBySettlementIdAndUserId(settlementId, userId)
             ?: throw MannaException(ErrorCode.SETTLEMENT_NOT_PARTICIPANT)
         participant.isPaid = true
